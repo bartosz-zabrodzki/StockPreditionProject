@@ -5,14 +5,10 @@ Combines traditional machine learning, deep learning, and time-series forecastin
 
 ---
 
-###Stock Forecast Wizard
-
 A full-featured **AI-driven stock prediction suite** using **LSTM**, **LightGBM**, and **Prophet**.
 Combines traditional machine learning, deep learning, and time-series forecasting to predict next-day stock prices for multiple historical periods.
 
 ---
-
-###Features
 
 * **Multi-Model Forecasting:**
 
