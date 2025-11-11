@@ -1,0 +1,109 @@
+2025-11-11 22:55:26 | INFO | Refreshing data from cache: AAPL...
+2025-11-11 22:55:27 | INFO | Saved updated cache: data_cache\AAPL_1d.csv
+2025-11-11 22:55:27 | INFO | Preprocessed dataframe (normalize=True) | Rows: 1473
+2025-11-11 22:55:27 | INFO | Split data into train/test (80%/20%)
+2025-11-11 22:58:33 | WARNING | Invalid cache data_cache\AAPL_1d.csv: 'Date' is not in list
+2025-11-11 22:58:33 | INFO | Refreshing data from cache: AAPL...
+2025-11-11 22:58:34 | INFO | Saved updated cache: data_cache\AAPL_1d.csv
+2025-11-11 22:58:34 | INFO | Preprocessed dataframe (normalize=True) | Rows: 1473
+2025-11-11 22:58:34 | INFO | Split data into train/test (80%/20%)
+2025-11-11 22:59:18 | WARNING | Invalid cache data_cache\AAPL_1d.csv: 'Date' is not in list
+2025-11-11 22:59:18 | INFO | Refreshing data from cache: AAPL...
+2025-11-11 22:59:18 | INFO | Saved updated cache: data_cache\AAPL_1d.csv
+2025-11-11 22:59:18 | INFO | Preprocessed dataframe (normalize=True) | Rows: 1473
+2025-11-11 22:59:18 | INFO | Split data into train/test (80%/20%)
+2025-11-11 22:59:57 | WARNING | Invalid cache data_cache\AAPL_1d.csv: 'Date' is not in list
+2025-11-11 22:59:57 | INFO | Refreshing data from cache: AAPL...
+2025-11-11 22:59:58 | INFO | Saved updated cache: data_cache\AAPL_1d.csv
+2025-11-11 22:59:58 | INFO | Preprocessed dataframe (normalize=True) | Rows: 1473
+2025-11-11 22:59:58 | INFO | Split data into train/test (80%/20%)
+2025-11-11 23:02:41 | WARNING | Invalid cache data_cache\AAPL_1d.csv: 'Date' is not in list
+2025-11-11 23:02:41 | INFO | Refreshing data from cache: AAPL...
+2025-11-11 23:02:41 | INFO | Saved updated cache: data_cache\AAPL_1d.csv
+2025-11-11 23:02:41 | INFO | Preprocessed dataframe (normalize=True) | Rows: 1473
+2025-11-11 23:02:41 | INFO | Split data into train/test (80%/20%)
+2025-11-11 23:04:36 | WARNING | Invalid cache data_cache\AAPL_1d.csv: 'Date' is not in list
+2025-11-11 23:04:36 | INFO | Refreshing data from cache: AAPL...
+2025-11-11 23:04:37 | INFO | Saved updated cache: data_cache\AAPL_1d.csv
+2025-11-11 23:04:37 | INFO | Preprocessed dataframe (normalize=True) | Rows: 1473
+2025-11-11 23:04:37 | INFO | Split data into train/test (80%/20%)
+2025-11-11 23:06:52 | WARNING | Invalid cache data_cache\AAPL_1d.csv: 'Date' is not in list
+2025-11-11 23:06:52 | INFO | Refreshing data from cache: AAPL...
+2025-11-11 23:06:53 | INFO | Saved updated cache: data_cache\AAPL_1d.csv
+2025-11-11 23:06:53 | INFO | Preprocessed dataframe (normalize=True) | Rows: 1473
+2025-11-11 23:06:53 | INFO | Split data into train/test (80%/20%)
+2025-11-11 23:09:01 | WARNING | Invalid cache data_cache\AAPL_1d.csv: 'Date' is not in list
+2025-11-11 23:09:01 | INFO | Refreshing data from cache: AAPL...
+2025-11-11 23:09:02 | INFO | Saved updated cache: data_cache\AAPL_1d.csv
+2025-11-11 23:09:02 | INFO | Preprocessed dataframe (normalize=True) | Rows: 1473
+2025-11-11 23:09:02 | INFO | Split data into train/test (80%/20%)
+2025-11-11 23:09:48 | WARNING | Invalid cache data_cache\AAPL_1d.csv: 'Date' is not in list
+2025-11-11 23:09:48 | INFO | Refreshing data from cache: AAPL...
+2025-11-11 23:09:49 | INFO | Saved updated cache: data_cache\AAPL_1d.csv
+2025-11-11 23:09:49 | INFO | Preprocessed dataframe (normalize=True) | Rows: 1473
+2025-11-11 23:09:49 | INFO | Split data into train/test (80%/20%)
+2025-11-11 23:12:28 | WARNING | Invalid cache data_cache\AAPL_1d.csv: 'Date' is not in list
+2025-11-11 23:12:28 | INFO | Refreshing data from cache: AAPL...
+2025-11-11 23:12:28 | INFO | Saved updated cache: data_cache\AAPL_1d.csv
+2025-11-11 23:12:28 | INFO | Preprocessed dataframe (normalize=True) | Rows: 1473
+2025-11-11 23:12:28 | INFO | Split data into train/test (80%/20%)
+2025-11-11 23:14:20 | WARNING | Invalid cache data_cache\AAPL_1d.csv: 'Date' is not in list
+2025-11-11 23:14:20 | INFO | Refreshing data from cache: AAPL...
+2025-11-11 23:14:20 | INFO | Saved updated cache: data_cache\AAPL_1d.csv
+2025-11-11 23:14:20 | INFO | Preprocessed dataframe (normalize=True) | Rows: 1473
+2025-11-11 23:14:20 | INFO | Split data into train/test (80%/20%)
+2025-11-11 23:14:52 | WARNING | Invalid cache data_cache\AAPL_1d.csv: 'Date' is not in list
+2025-11-11 23:14:52 | INFO | Refreshing data from cache: AAPL...
+2025-11-11 23:14:52 | INFO | Saved updated cache: data_cache\AAPL_1d.csv
+2025-11-11 23:14:52 | INFO | Preprocessed dataframe (normalize=True) | Rows: 1473
+2025-11-11 23:14:52 | INFO | Split data into train/test (80%/20%)
+2025-11-11 23:15:41 | WARNING | Invalid cache data_cache\AAPL_1d.csv: 'Date' is not in list
+2025-11-11 23:15:41 | INFO | Refreshing data from cache: AAPL...
+2025-11-11 23:15:42 | INFO | Saved updated cache: data_cache\AAPL_1d.csv
+2025-11-11 23:15:42 | INFO | Preprocessed dataframe (normalize=True) | Rows: 1473
+2025-11-11 23:15:42 | INFO | Split data into train/test (80%/20%)
+2025-11-11 23:16:00 | WARNING | Invalid cache data_cache\AAPL_1d.csv: 'Date' is not in list
+2025-11-11 23:16:00 | INFO | Refreshing data from cache: AAPL...
+2025-11-11 23:16:01 | INFO | Saved updated cache: data_cache\AAPL_1d.csv
+2025-11-11 23:16:01 | INFO | Preprocessed dataframe (normalize=True) | Rows: 1473
+2025-11-11 23:16:01 | INFO | Split data into train/test (80%/20%)
+2025-11-11 23:19:15 | WARNING | Invalid cache data_cache\AAPL_1d.csv: 'Date' is not in list
+2025-11-11 23:19:15 | INFO | Refreshing data from cache: AAPL...
+2025-11-11 23:19:16 | INFO | Saved updated cache: data_cache\AAPL_1d.csv
+2025-11-11 23:19:16 | INFO | Preprocessed dataframe (normalize=True) | Rows: 1473
+2025-11-11 23:19:16 | INFO | Split data into train/test (80%/20%)
+2025-11-11 23:20:12 | WARNING | Invalid cache data_cache\AAPL_1d.csv: 'Date' is not in list
+2025-11-11 23:20:12 | INFO | Refreshing data from cache: AAPL...
+2025-11-11 23:20:12 | INFO | Saved updated cache: data_cache\AAPL_1d.csv
+2025-11-11 23:20:12 | INFO | Preprocessed dataframe (normalize=True) | Rows: 1473
+2025-11-11 23:20:12 | INFO | Split data into train/test (80%/20%)
+2025-11-11 23:20:26 | WARNING | Invalid cache data_cache\AAPL_1d.csv: 'Date' is not in list
+2025-11-11 23:20:26 | INFO | Refreshing data from cache: AAPL...
+2025-11-11 23:20:26 | INFO | Saved updated cache: data_cache\AAPL_1d.csv
+2025-11-11 23:20:26 | INFO | Preprocessed dataframe (normalize=True) | Rows: 1473
+2025-11-11 23:20:26 | INFO | Split data into train/test (80%/20%)
+2025-11-11 23:21:06 | WARNING | Invalid cache data_cache\AAPL_1d.csv: 'Date' is not in list
+2025-11-11 23:21:06 | INFO | Refreshing data from cache: AAPL...
+2025-11-11 23:21:06 | INFO | Saved updated cache: data_cache\AAPL_1d.csv
+2025-11-11 23:21:06 | INFO | Preprocessed dataframe (normalize=True) | Rows: 1473
+2025-11-11 23:21:06 | INFO | Split data into train/test (80%/20%)
+2025-11-11 23:24:51 | WARNING | Invalid cache data_cache\AAPL_1d.csv: 'Date' is not in list
+2025-11-11 23:24:51 | INFO | Refreshing data from cache: AAPL...
+2025-11-11 23:24:52 | INFO | Saved updated cache: data_cache\AAPL_1d.csv
+2025-11-11 23:24:52 | INFO | Preprocessed dataframe (normalize=True) | Rows: 1473
+2025-11-11 23:24:52 | INFO | Split data into train/test (80%/20%)
+2025-11-11 23:26:02 | WARNING | Invalid cache data_cache\AAPL_1d.csv: 'Date' is not in list
+2025-11-11 23:26:02 | INFO | Refreshing data from cache: AAPL...
+2025-11-11 23:26:03 | INFO | Saved updated cache: data_cache\AAPL_1d.csv
+2025-11-11 23:26:03 | INFO | Preprocessed dataframe (normalize=True) | Rows: 1473
+2025-11-11 23:26:03 | INFO | Split data into train/test (80%/20%)
+2025-11-11 23:28:58 | WARNING | Invalid cache data_cache\AAPL_1d.csv: 'Date' is not in list
+2025-11-11 23:28:58 | INFO | Refreshing data from cache: AAPL...
+2025-11-11 23:28:59 | INFO | Saved updated cache: data_cache\AAPL_1d.csv
+2025-11-11 23:28:59 | INFO | Preprocessed dataframe (normalize=True) | Rows: 1473
+2025-11-11 23:28:59 | INFO | Split data into train/test (80%/20%)
+2025-11-11 23:32:51 | WARNING | Invalid cache data_cache\AAPL_1d.csv: 'Date' is not in list
+2025-11-11 23:32:51 | INFO | Refreshing data from cache: AAPL...
+2025-11-11 23:32:51 | INFO | Saved updated cache: data_cache\AAPL_1d.csv
+2025-11-11 23:32:51 | INFO | Preprocessed dataframe (normalize=True) | Rows: 1473
+2025-11-11 23:32:51 | INFO | Split data into train/test (80%/20%)
