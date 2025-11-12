@@ -1,0 +1,4 @@
+Rscript -e "df <- read.csv('src/data/data_cache/AAPL_1d.csv'); summary(as.numeric(df$Close))"
+
+
+"models/"
