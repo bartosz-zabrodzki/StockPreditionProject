@@ -7,8 +7,6 @@ import subprocess
 import sys
 from datetime import datetime, timedelta
 from typing import Optional, Tuple
-
-
 from tensorboard.backend.event_processing.data_provider import logger
 
 
@@ -89,7 +87,6 @@ class StockDataLoader:
         cache_path = self._get_cache_path(ticker, interval)
         cache_valid = self._is_cache_fresh(cache_path)
 
-        # --- Try to load cache first ---
         if cache_valid and not force_download and os.path.exists(cache_path):
             try:
                 df = pd.read_csv(cache_path, index_col="Date", parse_dates=True)
@@ -112,7 +109,7 @@ class StockDataLoader:
 
             if df.empty:
                 raise ValueError("No data returned from Yahoo Finance.")
-            df.to_csv(cache_path)
+            df.to_csv(cache_path, index=True)
             self.logger.info(f"Saved updated cache: {cache_path}")
             return df
         except Exception as e:

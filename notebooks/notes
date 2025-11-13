@@ -1,4 +1,10 @@
 Rscript -e "df <- read.csv('src/data/data_cache/AAPL_1d.csv'); summary(as.numeric(df$Close))"
+Rscript --encoding=UTF-8 src/r/analyze.R src/data/data_cache/AAPL_1d.csv
+Rscript -e 'cat(colnames(read.csv("src/data/data_cache/AAPL_1d.csv")), sep="\n")'
+Rscript -e "cat(readLines('src/data/data_cache/AAPL_1d.csv', n = 3), sep='\n')"
+Rscript -e 'df <- read.csv("src/data/data_cache/AAPL_1d.csv", skip=2); print(names(df))'
+
+
 
 
 "models/"
