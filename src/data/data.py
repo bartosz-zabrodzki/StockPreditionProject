@@ -1,20 +1,18 @@
-# src/data/data.py
+
 import os
 import pandas as pd
 import yfinance as yf
 import logging
 import subprocess
 import sys
+import shutil
 from datetime import datetime, timedelta
 from typing import Optional, Tuple
 from tensorboard.backend.event_processing.data_provider import logger
 
 
 def ensure_latest_yfinance():
-    """
-    Check if yfinance is up to date, and upgrade automatically if not.
-    Runs only once at program start.
-    """
+
     try:
         print("[Update] Checking for yfinance updates...")
         subprocess.check_call(
@@ -27,13 +25,9 @@ def ensure_latest_yfinance():
         print(f"[Warning] Could not verify yfinance version: {e}")
 ensure_latest_yfinance()
 
-
-
 class StockDataLoader:
-    """
-    Downloads, caches, reloads, and preprocesses stock market data.
-    """
-    def __init__(self, cache_dir: str = "data_cache", logs_dir: str = "logs" ,cache_expiry_days: int = 1):
+
+    def __init__(self, cache_dir: str = "data/data_cache", logs_dir: str = "data/logs" ,cache_expiry_days: int = 1):
         self.cache_dir = cache_dir
         self.cache_expiry_days = cache_expiry_days
         self.logs_dir = logs_dir
@@ -62,7 +56,6 @@ class StockDataLoader:
         return logger
 
     def _get_cache_path(self, ticker: str, interval: str) -> str:
-        """Generate a consistent filename for cached CSV."""
         safe_ticker = ticker.strip().upper().replace("/", "_")
         return os.path.join(self.cache_dir, f"{safe_ticker}_{interval}.csv")
 
@@ -79,6 +72,7 @@ class StockDataLoader:
             end: Optional[str] = None,
             interval: str = "1d",
             force_download: bool = False,
+            overwrite_cache: bool = False,
     ) -> pd.DataFrame:
 
         if end is None:
@@ -89,13 +83,22 @@ class StockDataLoader:
 
         if cache_valid and not force_download and os.path.exists(cache_path):
             try:
-                df = pd.read_csv(cache_path, index_col="Date", parse_dates=True)
-                if df.empty or "Close" not in df.columns:
-                    self.logger.info(f"Loading data from cache: {ticker}({cache_path})")
+                df = pd.read_csv(cache_path, parse_dates=["Date"])
+                if not df.empty and "Close" in df.columns:
+                    self.logger.info(f"Loaded cached data for {ticker}")
                     return df
             except Exception as e:
                 self.logger.warning(f"Invalid cache {cache_path}: {e}")
+
         self.logger.info(f"Refreshing data from cache: {ticker}...")
+
+        if overwrite_cache and os.path.exists(cache_path):
+            try:
+                os.remove(cache_path)
+                self.logger.info(f"Old cache removed: {cache_path}")
+            except Exception as e:
+                self.logger.warning(f"Failed to remove old cache {cache_path}: {e}")
+
         try:
             print(f"[Download] Fetching {ticker} from Yahoo Finance...")
             df = yf.download(
@@ -109,13 +112,49 @@ class StockDataLoader:
 
             if df.empty:
                 raise ValueError("No data returned from Yahoo Finance.")
-            df.to_csv(cache_path, index=True)
-            self.logger.info(f"Saved updated cache: {cache_path}")
+
+            if isinstance(df.columns, pd.MultiIndex):
+                df.columns = [col[0] if isinstance(col, tuple) else col for col in df.columns]
+                self.logger.info("Detected MultiIndex — flattened column names.")
+
+            df.reset_index(inplace=True)
+
+            expected_cols = ["Date", "Open", "High", "Low", "Close", "Volume"]
+            df = df[[c for c in df.columns if c in expected_cols]]
+            df.rename(columns=lambda x: x.strip().title(), inplace=True)
+
+            if df.index.name == "Date":
+                df.reset_index(inplace=True)
+
+            if "Unnamed: 0" in df.columns:
+                df.drop(columns=["Unnamed: 0"], inplace=True)
+
+            if list(df.columns).count("Date") > 1:
+                df = df.loc[:, ~df.columns.duplicated()]
+
+            df.to_csv(
+                cache_path,
+                index=False,
+                date_format="%Y-%m-%d",
+                float_format="%.6f",
+                encoding="utf-8"
+            )
+            self.logger.info(f"Saved clean cache: {cache_path}")
+
+            test_df = pd.read_csv(cache_path, nrows=5)
+            if "Date" not in test_df.columns or "Close" not in test_df.columns:
+                raise ValueError(f"Corrupted CSV: Missing 'Date' or 'Close' in {cache_path}")
+
+            self.logger.info(f"Validated CSV structure: {list(test_df.columns)}")
             return df
+
+
+
         except Exception as e:
-            self.logger.error(f"Failed to fetch {ticker}: {e}")
-            return pd.read_csv(cache_path, index_col="Date", parse_dates=True)
-        return pd.DataFrame()
+            import traceback
+            err = traceback.format_exc()
+            self.logger.error(f"Failed to fetch {ticker}: {e}\nTraceback:\n{err}")
+            return pd.DataFrame()
 
     def preprocess(self, df: pd.DataFrame, dropna: bool = True,normalize: bool = False,) -> pd.DataFrame:
 

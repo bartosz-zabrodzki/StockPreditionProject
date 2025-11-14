@@ -1,0 +1,6 @@
+2025-11-14 15:05:28 | INFO | Refreshing data from cache: AAPL...
+2025-11-14 15:05:29 | INFO | Detected MultiIndex — flattened column names.
+2025-11-14 15:05:29 | INFO | Saved clean cache: data/data_cache\AAPL_1d.csv
+2025-11-14 15:05:29 | INFO | Validated CSV structure: ['Date', 'Close', 'High', 'Low', 'Open', 'Volume']
+2025-11-14 15:05:29 | INFO | Preprocessed dataframe (normalize=True) | Rows: 1476
+2025-11-14 15:05:29 | INFO | Split data into train/test (80%/20%)

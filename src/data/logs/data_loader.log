@@ -2,3 +2,60 @@
 2025-11-11 19:49:51 | INFO | Saved updated cache: data_cache\AAPL_1d.csv
 2025-11-11 19:49:51 | INFO | Preprocessed dataframe (normalize=True) | Rows: 1473
 2025-11-11 19:49:51 | INFO | Split data into train/test (80%/20%)
+2025-11-13 17:32:10 | INFO | Refreshing data from cache: AAPL...
+2025-11-13 17:32:10 | INFO | Saved updated cache: data_cache\AAPL_1d.csv
+2025-11-13 17:32:10 | INFO | Preprocessed dataframe (normalize=True) | Rows: 1475
+2025-11-13 17:32:10 | INFO | Split data into train/test (80%/20%)
+2025-11-13 17:40:28 | INFO | Refreshing data from cache: AAPL...
+2025-11-13 17:40:29 | INFO | Saved updated cache: data_cache\AAPL_1d.csv
+2025-11-13 17:40:29 | INFO | Preprocessed dataframe (normalize=True) | Rows: 1475
+2025-11-13 17:40:29 | INFO | Split data into train/test (80%/20%)
+2025-11-13 17:42:03 | INFO | Refreshing data from cache: AAPL...
+2025-11-13 17:42:03 | INFO | Saved updated cache: data_cache\AAPL_1d.csv
+2025-11-13 17:42:03 | INFO | Preprocessed dataframe (normalize=True) | Rows: 1475
+2025-11-13 17:42:03 | INFO | Split data into train/test (80%/20%)
+2025-11-13 17:51:08 | INFO | Refreshing data from cache: AAPL...
+2025-11-13 17:51:09 | INFO | Saved updated cache: data_cache\AAPL_1d.csv
+2025-11-13 17:57:13 | INFO | Refreshing data from cache: AAPL...
+2025-11-13 17:57:14 | INFO | Detected MultiIndex — flattened column names.
+2025-11-13 17:57:14 | INFO | Saved updated cache: data_cache\AAPL_1d.csv
+2025-11-13 17:57:14 | INFO | Preprocessed dataframe (normalize=True) | Rows: 1475
+2025-11-13 17:57:14 | INFO | Split data into train/test (80%/20%)
+2025-11-13 18:00:20 | INFO | Refreshing data from cache: AAPL...
+2025-11-13 18:00:21 | INFO | Detected MultiIndex — flattened column names.
+2025-11-13 18:00:21 | INFO | Saved clean cache with single 'Date' column: data_cache\AAPL_1d.csv
+2025-11-13 18:00:21 | INFO | Saved updated cache: data_cache\AAPL_1d.csv
+2025-11-13 18:00:21 | INFO | Preprocessed dataframe (normalize=True) | Rows: 1475
+2025-11-13 18:00:21 | INFO | Split data into train/test (80%/20%)
+2025-11-13 18:11:24 | INFO | Refreshing data from cache: AAPL...
+2025-11-13 18:11:25 | INFO | Detected MultiIndex — flattened column names.
+2025-11-13 18:11:25 | INFO | Existing cache preserved as backup: data_cache\AAPL_1d.csv.bak_20251113_181125
+2025-11-13 18:11:25 | INFO | Saved clean cache with single 'Date' column: data_cache\AAPL_1d.csv
+2025-11-13 18:11:25 | INFO | Saved updated cache: data_cache\AAPL_1d.csv
+2025-11-13 18:11:25 | INFO | Preprocessed dataframe (normalize=True) | Rows: 1475
+2025-11-13 18:11:25 | INFO | Split data into train/test (80%/20%)
+2025-11-13 18:16:19 | INFO | Refreshing data from cache: AAPL...
+2025-11-13 18:16:19 | INFO | Old cache removed: data_cache\AAPL_1d.csv
+2025-11-13 18:16:20 | INFO | Detected MultiIndex — flattened column names.
+2025-11-13 18:16:20 | INFO | Saved clean cache with single 'Date' column: data_cache\AAPL_1d.csv
+2025-11-13 18:16:20 | INFO | Saved updated cache: data_cache\AAPL_1d.csv
+2025-11-13 18:16:20 | INFO | Preprocessed dataframe (normalize=True) | Rows: 1475
+2025-11-13 18:16:20 | INFO | Split data into train/test (80%/20%)
+2025-11-13 18:19:55 | INFO | Refreshing data from cache: AAPL...
+2025-11-13 18:19:55 | INFO | Detected MultiIndex — flattened column names.
+2025-11-13 18:19:55 | INFO | Saved clean cache with single 'Date' column: data_cache\AAPL_1d.csv
+2025-11-13 18:19:55 | INFO | Saved updated cache: data_cache\AAPL_1d.csv
+2025-11-13 18:19:55 | INFO | Preprocessed dataframe (normalize=True) | Rows: 1475
+2025-11-13 18:19:55 | INFO | Split data into train/test (80%/20%)
+2025-11-13 18:22:48 | INFO | Refreshing data from cache: AAPL...
+2025-11-13 18:22:49 | INFO | Detected MultiIndex — flattened column names.
+2025-11-13 18:22:49 | INFO | Saved clean cache: data_cache\AAPL_1d.csv
+2025-11-13 18:22:49 | INFO | Validated CSV structure: ['Date', 'Close', 'High', 'Low', 'Open', 'Volume']
+2025-11-13 18:22:49 | INFO | Preprocessed dataframe (normalize=True) | Rows: 1475
+2025-11-13 18:22:49 | INFO | Split data into train/test (80%/20%)
+2025-11-13 22:53:12 | INFO | Refreshing data from cache: AAPL...
+2025-11-13 22:53:13 | INFO | Detected MultiIndex — flattened column names.
+2025-11-13 22:53:13 | INFO | Saved clean cache: data_cache\AAPL_1d.csv
+2025-11-13 22:53:13 | INFO | Validated CSV structure: ['Date', 'Close', 'High', 'Low', 'Open', 'Volume']
+2025-11-13 22:53:13 | INFO | Preprocessed dataframe (normalize=True) | Rows: 1475
+2025-11-13 22:53:13 | INFO | Split data into train/test (80%/20%)

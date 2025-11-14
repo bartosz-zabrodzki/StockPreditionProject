@@ -1,12 +1,20 @@
-library(forecast)
+suppressPackageStartupMessages({
+  library(ggplot2)
+  library(forecast)
+})
 
-run_forecast <- function(df) {
-  ts_data <- ts(df$Close, frequency = 252)
-  fit <- tryCatch({
-    auto.arima(ts_data, seasonal = FALSE)
-  }, error = function(e) {
-    arima(ts_data, order = c(1,1,1))
-  })
-  future <- forecast(fit, h = 30)
-  list(fit = fit, future = future)
-}
+source("src/r/read_data.R")
+source("src/r/forecasting_utils.R")
+
+DATA_PATH <- "src/data/data_cache/AAPL_1d.csv"
+OUTPUT_PATH <- "src/data/processed/AAPL_forecast.csv"
+
+df <- read_data(DATA_PATH)
+res <- run_combined_forecast(df, horizon = 30)
+
+dir.create(dirname(OUTPUT_PATH), recursive = TRUE, showWarnings = FALSE)
+write.csv(res$combined, OUTPUT_PATH, row.names = FALSE)
+cat("Forecasts saved →", OUTPUT_PATH, "\n")
+
+autoplot(res$arima$forecast) + ggtitle("AAPL ARIMA Forecast")
+autoplot(res$ets$forecast) + ggtitle("AAPL ETS Forecast")
