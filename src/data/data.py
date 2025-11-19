@@ -27,7 +27,7 @@ ensure_latest_yfinance()
 
 class StockDataLoader:
 
-    def __init__(self, cache_dir: str = "data/data_cache", logs_dir: str = "data/logs" ,cache_expiry_days: int = 1):
+    def __init__(self, cache_dir: str = "data_cache", logs_dir: str = "logs" ,cache_expiry_days: int = 1):
         self.cache_dir = cache_dir
         self.cache_expiry_days = cache_expiry_days
         self.logs_dir = logs_dir

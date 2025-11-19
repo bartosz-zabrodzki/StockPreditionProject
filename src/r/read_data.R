@@ -19,24 +19,23 @@ read_data <- function(file_path = NULL) {
 
 
   if (grepl("^Price,", header_lines[1]) && grepl("^Ticker,", header_lines[2])) {
-  # YFinance-style multi-header file
+
   col_names <- unlist(strsplit(header_lines[1], ","))
   df <- read.csv(file_path, skip = 2, header = FALSE, stringsAsFactors = FALSE, col.names = col_names)
   cat("Wczytano dane w formacie yfinance. Kolumny:", paste(col_names, collapse = ", "), "\n")
 
 } else if (any(grepl("^Date", header_lines))) {
-  # Standard CSV (with Date header somewhere in top lines)
+
   skip_lines <- which(grepl("^Date", header_lines)) - 1
   df <- read.csv(file_path, skip = skip_lines, stringsAsFactors = FALSE)
   cat("Wczytano dane w formacie standardowym. Kolumny:", paste(names(df), collapse = ", "), "\n")
 
 } else {
-  # Fallback: assume simple CSV
+
   df <- read.csv(file_path, stringsAsFactors = FALSE)
   cat("Wczytano dane w formacie niestandardowym.\n")
 }
 
-# --- UNIVERSAL DATE PARSING FIX ---
 if ("Date" %in% names(df)) {
   suppressWarnings({
     df$Date <- as.Date(df$Date, format = "%Y-%m-%d")

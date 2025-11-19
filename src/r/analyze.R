@@ -1,4 +1,9 @@
+
 suppressPackageStartupMessages({
+Sys.setlocale("LC_ALL", "English_United States.utf8")
+options(encoding = "UTF-8")
+setwd(normalizePath("src", winslash = "/"))
+
   library(forecast)
   library(TTR)
   library(dplyr)
@@ -33,9 +38,16 @@ forecast_result <- run_forecast(df_features)
 dir.create("src/data/data_processed", showWarnings = FALSE, recursive = TRUE)
 dir.create("src/models", showWarnings = FALSE, recursive = TRUE)
 
-write.csv(df, "src/data/data_processed/AAPL_features.csv", row.names = FALSE)
-write.csv(forecast_result$future, "src/models/arima_forecast.csv", row.names = FALSE)
+if (!dir.exists("src/data/data_processed/features")) {
+  dir.create("src/data/data_processed/features", recursive = TRUE)
+}
+if (!dir.exists("src/data/data_processed/forecasts")) {
+  dir.create("src/data/data_processed/forecasts", recursive = TRUE)
+}
 
-cat("\n[Pipeline completed successfully]\n")
-cat("Saved features → src/data/data_processed/AAPL_features.csv\n")
-cat("Saved ARIMA forecast → src/models/arima_forecast.csv\n")
+write.csv(df, "src/data/data_processed/features/AAPL_features.csv", row.names = FALSE)
+write.csv(forecast_result$future, "src/data/data_processed/forecasts/AAPL_forecast.csv", row.names = FALSE)
+
+cat("[Pipeline completed successfully]\n")
+cat("Saved features → src/data/data_processed/features/AAPL_features.csv\n")
+cat("Saved ARIMA forecast → src/data/data_processed/forecasts/AAPL_forecast.csv\n")

@@ -59,3 +59,9 @@
 2025-11-13 22:53:13 | INFO | Validated CSV structure: ['Date', 'Close', 'High', 'Low', 'Open', 'Volume']
 2025-11-13 22:53:13 | INFO | Preprocessed dataframe (normalize=True) | Rows: 1475
 2025-11-13 22:53:13 | INFO | Split data into train/test (80%/20%)
+2025-11-16 12:50:46 | INFO | Refreshing data from cache: AAPL...
+2025-11-16 12:50:47 | INFO | Detected MultiIndex — flattened column names.
+2025-11-16 12:50:47 | INFO | Saved clean cache: data_cache\AAPL_1d.csv
+2025-11-16 12:50:47 | INFO | Validated CSV structure: ['Date', 'Close', 'High', 'Low', 'Open', 'Volume']
+2025-11-16 12:50:47 | INFO | Preprocessed dataframe (normalize=True) | Rows: 1477
+2025-11-16 12:50:47 | INFO | Split data into train/test (80%/20%)
