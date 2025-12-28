@@ -9,7 +9,11 @@ source(config_path, encoding = "UTF-8")
 cat("[Config] paths.R successfully loaded globally.\n")
 
 
-find_data_file <- function(filename = "AAPL_1d.csv") {
+default_data_filename <- function(ticker) {
+  paste0(ticker, "_1d.csv")
+}
+
+find_data_file <- function(filename = default_data_filename(TICKER)) {
   # Candidate search paths (relative and absolute)
   paths <- c(
     file.path("src", "data", "data_cache", filename),
@@ -30,7 +34,7 @@ find_data_file <- function(filename = "AAPL_1d.csv") {
 read_data <- function(file_path = NULL) {
   # Try auto-locate if no path provided
   if (is.null(file_path) || file_path == "" || !file.exists(file_path)) {
-    file_path <- find_data_file("AAPL_1d.csv")
+    file_path <- find_data_file(default_data_filename(TICKER))
   }
 
   if (!file.exists(file_path)) {

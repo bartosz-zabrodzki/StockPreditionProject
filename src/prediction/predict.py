@@ -13,6 +13,7 @@ import matplotlib.pyplot as plt
 from datetime import timedelta
 from src.models.config import (
     FEATURE_FILE,
+    TICKER,
     LSTM_MODEL_PATH,
     XGB_MODEL_PATH,
     SCALER_X_PATH,
@@ -145,14 +146,14 @@ def visualize_predictions(df):
              linewidth=2)
     plt.plot(df["Date"], df["XGB_Prediction"], label="XGBoost Prediction", linestyle=":", color="green", linewidth=2)
 
-    plt.title("AAPL Stock Price Prediction (LSTM vs XGBoost)", fontsize=16, fontweight="bold")
+    plt.title(f"{TICKER} Stock Price Prediction (LSTM vs XGBoost)", fontsize=16, fontweight="bold")
     plt.xlabel("Date", fontsize=12)
     plt.ylabel("Stock Price (USD)", fontsize=12)
     plt.legend(frameon=True, fontsize=10)
     plt.grid(alpha=0.3)
     plt.tight_layout()
 
-    output_path = os.path.join(OUTPUT_DIR, "AAPL_predictions_plot.png")
+    output_path = os.path.join(OUTPUT_DIR, f"{TICKER}_predictions_plot.png")
     os.makedirs(os.path.dirname(output_path), exist_ok=True)
     plt.savefig(output_path, dpi=300, bbox_inches="tight")
     print(f"[Plot] Saved high-quality chart → {output_path}")
@@ -165,7 +166,7 @@ if __name__ == "__main__":
     df_pred, features, lstm, xgb, scaler_x, scaler_y = make_predictions(df)
 
     os.makedirs(OUTPUT_DIR, exist_ok=True)
-    output_path = os.path.join(OUTPUT_DIR, "AAPL_predictions.csv")
+    output_path = os.path.join(OUTPUT_DIR, f"{TICKER}_predictions.csv")
 
     df_pred.to_csv(output_path, index=False, encoding="utf-8")
     print(f"[Save] Predictions saved → {output_path}")
@@ -173,10 +174,9 @@ if __name__ == "__main__":
     visualize_predictions(df_pred)
 
     forecast_df = forecast_future(df_pred, lstm, xgb, scaler_x, scaler_y, features)
-    forecast_path = os.path.join(OUTPUT_DIR, "AAPL_forecast.csv")
+    forecast_path = os.path.join(OUTPUT_DIR, f"{TICKER}_forecast.csv")
     forecast_df.to_csv(forecast_path, index=False, encoding="utf-8")
     print(f"[Save] Forecast saved → {forecast_path}")
-
 
 
 

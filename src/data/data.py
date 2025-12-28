@@ -10,6 +10,8 @@ from datetime import datetime, timedelta
 from typing import Optional, Tuple
 from tensorboard.backend.event_processing.data_provider import logger
 
+DEFAULT_TICKER = os.getenv("STOCK_TICKER", "AAPL").strip().upper() or "AAPL"
+
 
 def ensure_latest_yfinance():
 
@@ -178,10 +180,10 @@ class StockDataLoader:
 if __name__ == "__main__":
     loader = StockDataLoader(cache_expiry_days=1)
 
-    data = loader.fetch("AAPL", start="2020-01-01", interval="1d", force_download=True)
+    data = loader.fetch(DEFAULT_TICKER, start="2020-01-01", interval="1d", force_download=True)
     if not data.empty:
         clean = loader.preprocess(data, normalize=True)
         train, test = loader.split(clean)
         print(f"Train: {train.shape}, Test: {test.shape}")
     else:
-        print("Failed to load AAPL data — see logs for details.")
+        print(f"Failed to load {DEFAULT_TICKER} data — see logs for details.")

@@ -14,7 +14,9 @@ import joblib
 from torch.utils.data import DataLoader, TensorDataset
 from src.models.config import (
     FEATURE_FILE,
+    TICKER,
     MODEL_DIR,
+    LSTM_MODEL_PATH,
     SCALER_X_PATH,
     SCALER_Y_PATH,
     TRAINING_HISTORY_PATH,
@@ -56,7 +58,7 @@ def load_features(DATA_PATH):
     if not os.path.exists(DATA_PATH):
         raise FileNotFoundError(
             f"[ERROR] Processed data not found: {DATA_PATH}\n"
-            f"Please run R analysis first to generate 'AAPL_features.csv'."
+            f"Please run R analysis first to generate '{TICKER}_features.csv'."
         )
 
     df = pd.read_csv(DATA_PATH)
@@ -133,11 +135,11 @@ def train_lstm(x_train, y_train, x_val, y_val):
         if patience_counter >= LSTM_CONFIG["patience"]:
             print(f"[LSTM] Early stopping triggered at epoch {epoch}.")
             break
-    save_overwrite(os.path.join(MODEL_DIR, "lstm_model.pth"), best_state, is_torch=True)
+    save_overwrite(LSTM_MODEL_PATH, best_state, is_torch=True)
 
     model.load_state_dict(best_state)
-    torch.save(model.state_dict(), os.path.join(MODEL_DIR, "lstm_model.pth"))
-    print(f"[LSTM] Best model saved → {os.path.join(MODEL_DIR, 'lstm_model.pth')}")
+    torch.save(model.state_dict(), LSTM_MODEL_PATH)
+    print(f"[LSTM] Best model saved → {LSTM_MODEL_PATH}")
 
     model.eval()
     with torch.no_grad():
@@ -161,13 +163,13 @@ def train_xgboost(x_train, y_train, x_test, y_test):
     rmse = np.sqrt(mean_squared_error(y_test, preds))
     r2 = r2_score(y_test, preds)
 
-    save_overwrite(os.path.join(MODEL_DIR, "xgboost_model.pkl"), model)
+    save_overwrite(XGB_MODEL_PATH, model)
     save_overwrite(SCALER_X_PATH, scaler_X)
     save_overwrite(SCALER_Y_PATH, scaler_Y)
 
     print(f"[XGBoost] RMSE: {rmse:.4f}, R²: {r2:.4f}")
-    joblib.dump(model, os.path.join(MODEL_DIR, "xgboost_model.pkl"))
-    print(f"[XGBoost] Model saved to {os.path.join(MODEL_DIR, 'xgboost_model.pkl')}")
+    joblib.dump(model, XGB_MODEL_PATH)
+    print(f"[XGBoost] Model saved to {XGB_MODEL_PATH}")
     return rmse, r2
 if __name__ == "__main__":
     df = load_features(FEATURE_FILE)
@@ -204,4 +206,3 @@ if __name__ == "__main__":
     xgb_rmse, xgb_r2 = train_xgboost(x_train_flat, y_train, x_test_flat, y_test)
 
     print(f"\nSUMMARY → LSTM RMSE: {lstm_rmse:.4f}, R²: {lstm_r2:.4f} | XGB RMSE: {xgb_rmse:.4f}, R²: {xgb_r2:.4f}")
-

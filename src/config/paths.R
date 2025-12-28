@@ -37,6 +37,8 @@ FEATURES_DIR <- file.path(PROCESSED_DIR, "features")
 FORECASTS_DIR <- file.path(PROCESSED_DIR, "forecasts")
 OUTPUTS_DIR <- file.path(SRC_DIR, "outputs")
 CONFIG_DIR <- file.path(SRC_DIR, "config")
+TICKER <- toupper(trimws(Sys.getenv("STOCK_TICKER", "AAPL")))
+if (is.na(TICKER) || TICKER == "") TICKER <- "AAPL"
 
 # --- Ensure directories exist ---
 dirs <- c(DATA_DIR, CACHE_DIR, PROCESSED_DIR, FEATURES_DIR, FORECASTS_DIR, OUTPUTS_DIR)
@@ -61,5 +63,6 @@ assign("FEATURES_DIR", FEATURES_DIR, envir = .GlobalEnv)
 assign("FORECASTS_DIR", FORECASTS_DIR, envir = .GlobalEnv)
 assign("OUTPUTS_DIR", OUTPUTS_DIR, envir = .GlobalEnv)
 assign("CONFIG_DIR", CONFIG_DIR, envir = .GlobalEnv)
+assign("TICKER", TICKER, envir = .GlobalEnv)
 
 cat("[Config] Paths.R successfully initialized in global environment.\n")
