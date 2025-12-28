@@ -1,33 +1,39 @@
-
-import os
-import pandas as pd
-import yfinance as yf
 import logging
+import os
 import subprocess
 import sys
-import shutil
 from datetime import datetime, timedelta
 from typing import Optional, Tuple
-from tensorboard.backend.event_processing.data_provider import logger
+
+import pandas as pd
+import yfinance as yf
 
 
-def ensure_latest_yfinance():
-
+def ensure_latest_yfinance(logger: Optional[logging.Logger] = None) -> None:
+    """Optionally refresh the yfinance installation when explicitly requested."""
+    log = logger.info if logger else print
+    warn = logger.warning if logger else print
     try:
-        print("[Update] Checking for yfinance updates...")
+        log("[Update] Checking for yfinance updates...")
         subprocess.check_call(
             [sys.executable, "-m", "pip", "install", "--upgrade", "yfinance"],
             stdout=subprocess.DEVNULL,
             stderr=subprocess.DEVNULL,
         )
-        print("[Update] yfinance is up to date.")
-    except Exception as e:
-        print(f"[Warning] Could not verify yfinance version: {e}")
-ensure_latest_yfinance()
+        log("[Update] yfinance is up to date.")
+    except Exception as exc:
+        warn(f"[Warning] Could not verify yfinance version: {exc}")
+
 
 class StockDataLoader:
 
-    def __init__(self, cache_dir: str = "data_cache", logs_dir: str = "logs" ,cache_expiry_days: int = 1):
+    def __init__(
+        self,
+        cache_dir: str = "data_cache",
+        logs_dir: str = "logs",
+        cache_expiry_days: int = 1,
+        auto_update_yfinance: bool = False,
+    ):
         self.cache_dir = cache_dir
         self.cache_expiry_days = cache_expiry_days
         self.logs_dir = logs_dir
@@ -36,6 +42,8 @@ class StockDataLoader:
         os.makedirs(logs_dir, exist_ok=True)
 
         self.logger = self._setup_logger()
+        if auto_update_yfinance:
+            ensure_latest_yfinance(self.logger)
 
     def _setup_logger(self):
         logfile = os.path.join(self.logs_dir, "data_loader.log")
