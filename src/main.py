@@ -7,7 +7,6 @@ R_PATH = r"C:\Program Files\R\R-4.5.2\bin\Rscript.exe"
 R_LIBS = os.path.join(os.getcwd(), "venv_R_libs")
 
 def ensure_r_environment():
-    """Robust R environment setup — uses temporary .R script instead of inline command."""
     if not os.path.exists(R_PATH):
         sys.exit(f"[ERROR] Rscript not found at {R_PATH}")
 

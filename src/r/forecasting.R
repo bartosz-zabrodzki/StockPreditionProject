@@ -1,20 +1,25 @@
 suppressPackageStartupMessages({
-  library(ggplot2)
   library(forecast)
+  library(ggplot2)
 })
 
-source("src/r/read_data.R")
-source("src/r/forecasting_utils.R")
+# --- Load paths configuration ---
+source(file.path("src", "config", "paths.R"), encoding = "UTF-8")
 
-DATA_PATH <- "src/data/data_cache/AAPL_1d.csv"
-OUTPUT_PATH <- "src/data/data_processed/forecasts/AAPL_forecast.csv"
+# --- Import helper module ---
+utils_path <- file.path(R_DIR, "forecasting_utils.R")
+if (!file.exists(utils_path)) {
+  stop("[Forecasting] ERROR: Cannot locate forecasting_utils.R")
+}
 
-df <- read_data(DATA_PATH)
-res <- run_combined_forecast(df, horizon = 30)
+cat("[Forecasting] Sourcing:", normalizePath(utils_path), "\n")
+source(utils_path, encoding = "UTF-8", local = .GlobalEnv)
 
-dir.create(dirname(OUTPUT_PATH), recursive = TRUE, showWarnings = FALSE)
-write.csv(res$combined, OUTPUT_PATH, row.names = FALSE)
-cat("Forecasts saved →", OUTPUT_PATH, "\n")
+# --- Main forecasting wrapper ---
+run_forecast <- function(df, horizon = 30) {
+  cat("[Status] Running combined forecast...\n")
+  result <- run_combined_forecast(df, horizon)
+  cat("[Forecasting pipeline completed successfully.]\n")
+  return(result)
+}
 
-autoplot(res$arima$forecast) + ggtitle("AAPL ARIMA Forecast")
-autoplot(res$ets$forecast) + ggtitle("AAPL ETS Forecast")

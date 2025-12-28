@@ -1,99 +1,95 @@
+config_path <- normalizePath(file.path("src", "config", "paths.R"), mustWork = FALSE)
+if (!file.exists(config_path)) {
+  config_path <- normalizePath(file.path(dirname(getwd()), "src", "config", "paths.R"), mustWork = FALSE)
+}
+if (!file.exists(config_path)) {
+  stop("[ConfigError] Cannot locate paths.R")
+}
+source(config_path, encoding = "UTF-8")
+cat("[Config] paths.R successfully loaded globally.\n")
+
+
 find_data_file <- function(filename = "AAPL_1d.csv") {
+  # Candidate search paths (relative and absolute)
   paths <- c(
+    file.path("src", "data", "data_cache", filename),
     file.path("data", "data_cache", filename),
-    file.path("src", "data", "data_cache", filename)
+    file.path("..", "data", "data_cache", filename)
   )
+
   for (p in paths) {
-    if (file.exists(p)) return(p)
+    if (file.exists(p)) {
+      return(normalizePath(p, winslash = "/", mustWork = TRUE))
+    }
   }
+
   stop(paste("Nie znaleziono pliku danych:", filename))
 }
 
+
 read_data <- function(file_path = NULL) {
-  if (is.null(file_path) || file_path == "") {
+  # Try auto-locate if no path provided
+  if (is.null(file_path) || file_path == "" || !file.exists(file_path)) {
     file_path <- find_data_file("AAPL_1d.csv")
   }
-  cat("Znaleziono plik danych:", normalizePath(file_path), "\n")
 
-  header_lines <- readLines(file_path, n = 5)
+  if (!file.exists(file_path)) {
+    stop(paste("BŁĄD: Data file not found:", file_path))
+  }
 
+  cat("Znaleziono plik danych:", normalizePath(file_path, winslash = "/"), "\n")
 
-  if (grepl("^Price,", header_lines[1]) && grepl("^Ticker,", header_lines[2])) {
+  # Read header preview
+  header_lines <- suppressWarnings(readLines(file_path, n = 5, warn = FALSE))
 
-  col_names <- unlist(strsplit(header_lines[1], ","))
-  df <- read.csv(file_path, skip = 2, header = FALSE, stringsAsFactors = FALSE, col.names = col_names)
-  cat("Wczytano dane w formacie yfinance. Kolumny:", paste(col_names, collapse = ", "), "\n")
+  # --- Auto-detect format ---
+  if (length(header_lines) >= 2 && grepl("^Price,", header_lines[1]) && grepl("^Ticker,", header_lines[2])) {
+    col_names <- unlist(strsplit(header_lines[1], ","))
+    df <- read.csv(file_path, skip = 2, header = FALSE, stringsAsFactors = FALSE, col.names = col_names)
+    cat("Wczytano dane w formacie yfinance. Kolumny:", paste(col_names, collapse = ", "), "\n")
 
-} else if (any(grepl("^Date", header_lines))) {
+  } else if (any(grepl("^Date", header_lines))) {
+    skip_lines <- which(grepl("^Date", header_lines)) - 1
+    df <- read.csv(file_path, skip = skip_lines, stringsAsFactors = FALSE)
+    cat("Wczytano dane w formacie standardowym. Kolumny:", paste(names(df), collapse = ", "), "\n")
 
-  skip_lines <- which(grepl("^Date", header_lines)) - 1
-  df <- read.csv(file_path, skip = skip_lines, stringsAsFactors = FALSE)
-  cat("Wczytano dane w formacie standardowym. Kolumny:", paste(names(df), collapse = ", "), "\n")
+  } else {
+    df <- read.csv(file_path, stringsAsFactors = FALSE)
+    cat("Wczytano dane w formacie niestandardowym.\n")
+  }
 
-} else {
+  # --- Normalize column names ---
+  names(df) <- gsub("[^[:alnum:]_]+", "", trimws(names(df)))
 
-  df <- read.csv(file_path, stringsAsFactors = FALSE)
-  cat("Wczytano dane w formacie niestandardowym.\n")
-}
+  # --- Ensure Date column exists ---
+  if (!"Date" %in% names(df)) {
+    warning("Brak kolumny 'Date' – użyto pierwszej kolumny jako daty.")
+    df$Date <- df[[1]]
+  }
 
-if ("Date" %in% names(df)) {
+  # --- Parse Date formats robustly ---
   suppressWarnings({
     df$Date <- as.Date(df$Date, format = "%Y-%m-%d")
     if (any(is.na(df$Date))) {
-      # Retry with a few common alternate formats (defensive)
       df$Date <- as.Date(df$Date, tryFormats = c("%Y/%m/%d", "%d-%m-%Y", "%m/%d/%Y"))
     }
   })
+
   if (any(is.na(df$Date))) {
     warning("Niektóre daty nadal nie zostały rozpoznane — pozostały tekstowo.")
   } else {
     cat("Daty rozpoznane poprawnie w formacie ISO.\n")
   }
-} else {
-  warning("Brak kolumny 'Date' w danych.")
-}
 
-
-  names(df) <- trimws(names(df))
-  names(df) <- gsub("[^[:alnum:]]+", "", names(df))
-
-  if ("Price" %in% names(df) && !"Date" %in% names(df)) {
-    names(df)[names(df) == "Price"] <- "Date"
-  }
-
-  if (!"Date" %in% names(df)) {
-    df$Date <- df[[1]]
-  }
-df$Date <- as.character(df$Date)
-df$Date <- trimws(gsub("[^0-9\\-]", "", df$Date))
-parsed <- as.Date(df$Date, format = "%Y-%m-%d")
-if (any(is.na(parsed))) {
-  cat("Niektóre daty nadal nie zostały rozpoznane — pozostały tekstowo.\n")
-} else {
-  df$Date <- parsed
-}
-
-df <- df[!is.na(df$Close) & !is.na(df$Date), ]
-
-if (all(grepl("^[0-9]{4}-[0-9]{2}-[0-9]{2}$", df$Date))) {
-  df$Date <- as.Date(df$Date, format = "%Y-%m-%d")
-} else if (all(grepl("^[0-9]{2}/[0-9]{2}/[0-9]{4}$", df$Date))) {
-  df$Date <- as.Date(df$Date, format = "%m/%d/%Y")
-} else {
-  warning("Nie udało się jednoznacznie rozpoznać formatu daty. Pozostawiono tekstowo.")
-}
-
-df <- df[!is.na(df$Date) & !is.na(df$Close), ]
-
-  if (any(is.na(df$Date))) {
-    cat("Ostrzeżenie: niektóre daty nie zostały rozpoznane. Przykładowe wartości:\n")
-    print(unique(df$Date[is.na(df$Date)]))
+  # --- Validate Close column ---
+  if (!"Close" %in% names(df)) {
+    stop("BŁĄD: Brak wymaganej kolumny 'Close' w danych!")
   }
 
   df$Close <- suppressWarnings(as.numeric(df$Close))
-  df <- df[!is.na(df$Close) & !is.na(df$Date), ]
+  df <- df[!is.na(df$Date) & !is.na(df$Close), ]
 
+  # --- Summary ---
   cat("Wczytano poprawnie wierszy:", nrow(df), "\n")
-  return(df)
-
+  invisible(df)
 }

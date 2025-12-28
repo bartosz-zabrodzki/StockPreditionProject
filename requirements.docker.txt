@@ -1,0 +1,37 @@
+# Core data stack (latest stable)
+numpy==2.3.5
+pandas==2.3.3
+scipy==1.16.3
+
+# ML / stats
+scikit-learn==1.8.0
+xgboost==3.1.2
+statsmodels==0.14.6
+pmdarima==2.1.1
+
+# Plotting
+matplotlib==3.10.8
+seaborn==0.13.2
+
+# Utilities
+joblib==1.5.2
+threadpoolctl==3.6.0
+tqdm==4.67.1
+requests==2.32.5
+python-dateutil==2.9.0.post0
+pytz==2025.2
+tzdata==2025.3
+tzlocal==5.3.1
+
+# Data sources
+yfinance==0.2.66
+beautifulsoup4==4.14.3
+lxml==6.0.2
+
+# Env / config
+python-dotenv==1.2.1
+
+# Optional – R bridge (zostaw tylko jeśli faktycznie używasz)
+rpy2==3.6.4
+rpy2-rinterface==3.6.3
+rpy2-robjects==3.6.3

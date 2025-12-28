@@ -1,3 +1,8 @@
+import sys, os
+print("PYTHON:", sys.executable)
+print("VERSION:", sys.version)
+print("PATH0:", os.environ.get("PATH", "")[:200])
+
 import os
 import joblib
 import torch
@@ -5,9 +10,6 @@ import torch.nn as nn
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
-from pyexpat import features
-from sklearn.preprocessing import MinMaxScaler
-from xgboost import XGBRegressor
 from datetime import timedelta
 from src.models.config import (
     FEATURE_FILE,
@@ -48,7 +50,8 @@ def load_models(input_size):
         num_layers=LSTM_CONFIG["num_layers"],
         dropout=LSTM_CONFIG["dropout"]
     )
-    lstm.load_state_dict(torch.load(LSTM_MODEL_PATH, map_location=torch.device('cpu')))
+    state = torch.load(LSTM_MODEL_PATH, map_location="cpu", weights_only=True)
+    lstm.load_state_dict(state)
     lstm.eval()
 
     xgb = joblib.load(XGB_MODEL_PATH)
@@ -60,7 +63,10 @@ def load_models(input_size):
 
 def make_predictions(df):
     target = "Close"
-    features = [c for c in df.columns if c != target and df[c].dtype != 'object']
+    features = ["High", "Low", "Open", "Volume"]
+    missing = [c for c in features if c not in df.columns]
+    if missing:
+        raise ValueError(f"[ERROR] Missing required feature columns: {missing}")
 
     x = df[features].values
     y = df[target].values.reshape(-1, 1)

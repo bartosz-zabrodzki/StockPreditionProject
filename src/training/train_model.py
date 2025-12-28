@@ -1,3 +1,6 @@
+import torch, sys
+print("torch file:", torch.__file__)
+print("python:", sys.executable)
 import os
 import pandas as pd
 import numpy as np
