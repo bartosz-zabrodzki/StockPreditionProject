@@ -59,7 +59,7 @@ safe_source(file.path(R_DIR, "forecasting.R"))
 safe_source(file.path(R_DIR, "diagnostics.R"))
 
 # --- Dane wejściowe ---
-DATA_PATH <- file.path(CACHE_DIR, "AAPL_1d.csv")
+DATA_PATH <- file.path(CACHE_DIR, paste0(TICKER, "_1d.csv"))
 if (!file.exists(DATA_PATH)) stop(paste("[DataError] File not found:", DATA_PATH))
 cat("[Info] Using data file:", DATA_PATH, "\n")
 
@@ -83,8 +83,8 @@ forecast_result <- run_forecast(df_features)
 # ============================================================
 #   3. Zapis wyników
 # ============================================================
-write.csv(df_features, file.path(FEATURES_DIR, "AAPL_features.csv"), row.names = FALSE)
-write.csv(forecast_result$future, file.path(FORECASTS_DIR, "AAPL_forecast.csv"), row.names = FALSE)
+write.csv(df_features, file.path(FEATURES_DIR, paste0(TICKER, "_features.csv")), row.names = FALSE)
+write.csv(forecast_result$future, file.path(FORECASTS_DIR, paste0(TICKER, "_forecast.csv")), row.names = FALSE)
 
 cat("\n[Pipeline completed successfully]\n")
 cat("Saved features →", FEATURES_DIR, "\n")

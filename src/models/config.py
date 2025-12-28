@@ -3,10 +3,13 @@ import os
 # === Base directories ===
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
+# === Dynamic ticker configuration ===
+TICKER = os.getenv("STOCK_TICKER", "AAPL").strip().upper() or "AAPL"
+
 DATA_DIR = os.path.join(BASE_DIR, "data")
 PROCESSED_DATA_DIR = os.path.join(DATA_DIR, "data_processed", "features")
 MODEL_DIR = os.path.join(BASE_DIR, "models")
-OUTPUT_DIR = os.path.join(DATA_DIR, "data_output")
+OUTPUT_DIR = os.path.join(DATA_DIR, "data_output", TICKER)
 SCALER_DIR = os.path.join(MODEL_DIR, "scalers")
 
 # Ensure directories exist
@@ -14,12 +17,12 @@ for path in [MODEL_DIR, OUTPUT_DIR, SCALER_DIR]:
     os.makedirs(path, exist_ok=True)
 
 # === File paths ===
-FEATURE_FILE = os.path.join(PROCESSED_DATA_DIR, "AAPL_features.csv")
-LSTM_MODEL_PATH = os.path.join(MODEL_DIR, "lstm_model.pth")
-XGB_MODEL_PATH = os.path.join(MODEL_DIR, "xgboost_model.pkl")
-TRAINING_HISTORY_PATH = os.path.join(MODEL_DIR, "lstm_training_history.csv")
-SCALER_X_PATH = os.path.join(SCALER_DIR, "scaler_x.pkl")
-SCALER_Y_PATH = os.path.join(SCALER_DIR, "scaler_y.pkl")
+FEATURE_FILE = os.path.join(PROCESSED_DATA_DIR, f"{TICKER}_features.csv")
+LSTM_MODEL_PATH = os.path.join(MODEL_DIR, f"lstm_model_{TICKER}.pth")
+XGB_MODEL_PATH = os.path.join(MODEL_DIR, f"xgboost_model_{TICKER}.pkl")
+TRAINING_HISTORY_PATH = os.path.join(MODEL_DIR, f"lstm_training_history_{TICKER}.csv")
+SCALER_X_PATH = os.path.join(SCALER_DIR, f"scaler_x_{TICKER}.pkl")
+SCALER_Y_PATH = os.path.join(SCALER_DIR, f"scaler_y_{TICKER}.pkl")
 
 # === LSTM model configuration ===
 LSTM_CONFIG = {
@@ -46,4 +49,3 @@ XGB_CONFIG = {
 
 # === Forecast settings ===
 FORECAST_DAYS = 30
-

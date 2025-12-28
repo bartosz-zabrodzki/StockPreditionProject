@@ -8,14 +8,17 @@ if (length(missing) > 0) {
   install.packages(missing, repos = "https://cloud.r-project.org")
 }
 
+TICKER <- toupper(trimws(Sys.getenv("STOCK_TICKER", "AAPL")))
+if (is.na(TICKER) || TICKER == "") TICKER <- "AAPL"
 cat("[Diagnostic] Session info:\n")
 print(sessionInfo())
 
 cat("[Diagnostic] Checking data file...\n")
-if (!file.exists("src/data/data_cache/AAPL_1d.csv")) {
-  cat("File missing: src/data/data_cache/AAPL_1d.csv\n")
+data_file <- file.path("src", "data", "data_cache", paste0(TICKER, "_1d.csv"))
+if (!file.exists(data_file)) {
+  cat("File missing:", data_file, "\n")
 } else {
-  cat("File exists: src/data/data_cache/AAPL_1d.csv\n")
+  cat("File exists:", data_file, "\n")
 }
 
 cat("[Diagnostic] Finished. R environment OK.\n")
