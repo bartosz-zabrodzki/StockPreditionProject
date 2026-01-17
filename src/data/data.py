@@ -1,41 +1,33 @@
-
+from src.models.config import get_model_paths
+from src.config.paths import CACHE_DIR
 import os
 import pandas as pd
 import yfinance as yf
-import logging
 import subprocess
 import sys
-import shutil
 from datetime import datetime, timedelta
 from typing import Optional, Tuple
-from tensorboard.backend.event_processing.data_provider import logger
+import logging
+logger = logging.getLogger(__name__)
+logging.basicConfig(level=logging.INFO)
+
+
 
 DEFAULT_TICKER = os.getenv("STOCK_TICKER", "AAPL").strip().upper() or "AAPL"
-
-
-def ensure_latest_yfinance():
-
-    try:
-        print("[Update] Checking for yfinance updates...")
-        subprocess.check_call(
-            [sys.executable, "-m", "pip", "install", "--upgrade", "yfinance"],
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.DEVNULL,
-        )
-        print("[Update] yfinance is up to date.")
-    except Exception as e:
-        print(f"[Warning] Could not verify yfinance version: {e}")
-ensure_latest_yfinance()
+paths = get_model_paths()
+TICKER = paths["TICKER"]
+INTERVAL = paths["INTERVAL"]
+PERIOD = paths["PERIOD"]
 
 class StockDataLoader:
 
-    def __init__(self, cache_dir: str = "data_cache", logs_dir: str = "logs" ,cache_expiry_days: int = 1):
+    def __init__(self, cache_dir: str = CACHE_DIR, logs_dir: str = "logs", cache_expiry_days: int = 1):
         self.cache_dir = cache_dir
         self.cache_expiry_days = cache_expiry_days
         self.logs_dir = logs_dir
 
-        os.makedirs(cache_dir, exist_ok=True)
-        os.makedirs(logs_dir, exist_ok=True)
+        os.makedirs(self.cache_dir, exist_ok=True)
+        os.makedirs(self.logs_dir, exist_ok=True)
 
         self.logger = self._setup_logger()
 
@@ -80,6 +72,9 @@ class StockDataLoader:
         if end is None:
             end = datetime.today().strftime("%Y-%m-%d")
 
+        ticker = ticker.strip().upper()
+        interval = interval.strip()
+
         cache_path = self._get_cache_path(ticker, interval)
         cache_valid = self._is_cache_fresh(cache_path)
 
@@ -92,7 +87,7 @@ class StockDataLoader:
             except Exception as e:
                 self.logger.warning(f"Invalid cache {cache_path}: {e}")
 
-        self.logger.info(f"Refreshing data from cache: {ticker}...")
+        self.logger.info(f"Downloading fresh data: {ticker} (interval={interval})...")
 
         if overwrite_cache and os.path.exists(cache_path):
             try:
@@ -103,13 +98,14 @@ class StockDataLoader:
 
         try:
             print(f"[Download] Fetching {ticker} from Yahoo Finance...")
+
             df = yf.download(
-                ticker.strip().upper(),
+                ticker,
                 start=start,
                 end=end,
                 interval=interval,
+                auto_adjust=False,
                 progress=False,
-                auto_adjust=True,
             )
 
             if df.empty:
@@ -122,7 +118,7 @@ class StockDataLoader:
             df.reset_index(inplace=True)
 
             expected_cols = ["Date", "Open", "High", "Low", "Close", "Volume"]
-            df = df[[c for c in df.columns if c in expected_cols]]
+            df = df[[c for c in expected_cols if c in df.columns]]
             df.rename(columns=lambda x: x.strip().title(), inplace=True)
 
             if df.index.name == "Date":
@@ -152,11 +148,12 @@ class StockDataLoader:
 
 
 
+
         except Exception as e:
             import traceback
             err = traceback.format_exc()
             self.logger.error(f"Failed to fetch {ticker}: {e}\nTraceback:\n{err}")
-            return pd.DataFrame()
+            raise  # <-- zamiast: return pd.DataFrame()
 
     def preprocess(self, df: pd.DataFrame, dropna: bool = True,normalize: bool = False,) -> pd.DataFrame:
 
@@ -176,6 +173,29 @@ class StockDataLoader:
         self.logger.info(f"Split data into train/test ({train_ratio * 100:.0f}%/{(1 - train_ratio) * 100:.0f}%)")
         return df.iloc[:split_idx], df.iloc[split_idx:]
 
+def run(ticker: str, start: str = "2020-01-01", interval: str = "1d", normalize: bool = True, split: bool = True):
+    from src.config.paths import ensure_dirs
+    ensure_dirs()
+
+    force = os.getenv("FORCE", "0") == "1"
+
+    loader = StockDataLoader(cache_expiry_days=1)
+
+    data = loader.fetch(
+        ticker,
+        start=start,
+        interval=interval,
+        force_download=force,
+        overwrite_cache=force,
+    )
+    if data.empty:
+        raise SystemExit(f"Failed to load {ticker} data — see logs for details.")
+    clean = loader.preprocess(data, normalize=normalize)
+    if split:
+        train, test = loader.split(clean)
+        print(f"Train: {train.shape}, Test: {test.shape}")
+    return clean
+
 
 if __name__ == "__main__":
     loader = StockDataLoader(cache_expiry_days=1)
@@ -187,3 +207,4 @@ if __name__ == "__main__":
         print(f"Train: {train.shape}, Test: {test.shape}")
     else:
         print(f"Failed to load {DEFAULT_TICKER} data — see logs for details.")
+

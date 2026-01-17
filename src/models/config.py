@@ -1,28 +1,10 @@
+# ============================================================
+# src/models/config.py — dynamic per-ticker model configuration
+# ============================================================
+
 import os
-
-# === Base directories ===
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-
-# === Dynamic ticker configuration ===
-TICKER = os.getenv("STOCK_TICKER", "AAPL").strip().upper() or "AAPL"
-
-DATA_DIR = os.path.join(BASE_DIR, "data")
-PROCESSED_DATA_DIR = os.path.join(DATA_DIR, "data_processed", "features")
-MODEL_DIR = os.path.join(BASE_DIR, "models")
-OUTPUT_DIR = os.path.join(DATA_DIR, "data_output", TICKER)
-SCALER_DIR = os.path.join(MODEL_DIR, "scalers")
-
-# Ensure directories exist
-for path in [MODEL_DIR, OUTPUT_DIR, SCALER_DIR]:
-    os.makedirs(path, exist_ok=True)
-
-# === File paths ===
-FEATURE_FILE = os.path.join(PROCESSED_DATA_DIR, f"{TICKER}_features.csv")
-LSTM_MODEL_PATH = os.path.join(MODEL_DIR, f"lstm_model_{TICKER}.pth")
-XGB_MODEL_PATH = os.path.join(MODEL_DIR, f"xgboost_model_{TICKER}.pkl")
-TRAINING_HISTORY_PATH = os.path.join(MODEL_DIR, f"lstm_training_history_{TICKER}.csv")
-SCALER_X_PATH = os.path.join(SCALER_DIR, f"scaler_x_{TICKER}.pkl")
-SCALER_Y_PATH = os.path.join(SCALER_DIR, f"scaler_y_{TICKER}.pkl")
+from pathlib import Path
+from src.config.paths import FEATURES_DIR, MODEL_DIR, SCALERS_DIR, OUTPUT_DIR
 
 # === LSTM model configuration ===
 LSTM_CONFIG = {
@@ -34,7 +16,7 @@ LSTM_CONFIG = {
     "weight_decay": 1e-4,
     "epochs": 150,
     "patience": 12,
-    "batch_size": 32
+    "batch_size": 32,
 }
 
 # === XGBoost configuration ===
@@ -44,8 +26,37 @@ XGB_CONFIG = {
     "max_depth": 6,
     "subsample": 0.8,
     "colsample_bytree": 0.8,
-    "random_state": 42
+    "random_state": 42,
 }
 
 # === Forecast settings ===
 FORECAST_DAYS = 30
+
+
+# ============================================================
+# Dynamic paths (computed at runtime)
+# ============================================================
+def get_model_paths():
+    """Compute file paths dynamically based on environment (ticker, etc.)."""
+    ticker = os.getenv("STOCK_TICKER", "AAPL")
+    interval = os.getenv("STOCK_INTERVAL", "1d")
+    period = os.getenv("STOCK_PERIOD", "max")
+
+    feature_file = FEATURES_DIR / f"{ticker}_features.csv"
+
+    paths = {
+        "TICKER": ticker,
+        "INTERVAL": interval,
+        "PERIOD": period,
+        "FEATURE_FILE": feature_file,
+        "LSTM_MODEL_PATH": MODEL_DIR / f"lstm_model_{ticker}.pth",
+        "XGB_MODEL_PATH": MODEL_DIR / f"xgboost_model_{ticker}.pkl",
+        "SCALER_X_PATH": SCALERS_DIR / f"scaler_x_{ticker}.pkl",
+        "SCALER_Y_PATH": SCALERS_DIR / f"scaler_y_{ticker}.pkl",
+        "TRAINING_HISTORY_PATH": MODEL_DIR / f"lstm_training_history_{ticker}.csv",
+        "PREDICTIONS_CSV": OUTPUT_DIR / f"{ticker}_predictions.csv",
+        "PREDICTIONS_PNG": OUTPUT_DIR / f"{ticker}_predictions_plot.png",
+        "FORECAST_CSV": OUTPUT_DIR / f"{ticker}_forecast.csv",
+    }
+
+    return paths

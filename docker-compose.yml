@@ -1,13 +1,68 @@
-version: "3.9"
-
 services:
   stock-predictor:
     build: .
-    container_name: stock-predictor
     volumes:
-      - .:/app
-    working_dir: /app/src
-    command: ["python", "main.py"]
+      - ./:/app
+      - ./data:/data
+      - ./models:/models
+      - ./output:/output
+      - ./logs:/logs
+    working_dir: /app
     environment:
+      - PYTHONPATH=/app
       - PYTHONUNBUFFERED=1
+      - DATA_ROOT=/data
+      - MODEL_DIR=/models
+      - OUTPUT_DIR=/output
+      - LOG_DIR=/logs
+    tty: true
+
+  api:
+    build: .
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./:/app
+      - ./data:/data
+      - ./models:/models
+      - ./output:/output
+      - ./logs:/logs
+    working_dir: /app
+    environment:
+      - PYTHONPATH=/app
+      - PYTHONUNBUFFERED=1
+      - DATA_ROOT=/data
+      - MODEL_DIR=/models
+      - OUTPUT_DIR=/output
+      - LOG_DIR=/logs
+      - LANG=C.UTF-8
+      - LC_ALL=C.UTF-8
+    command: [
+      "python3.11", "-m", "uvicorn", "src.api.app:app",
+      "--host", "0.0.0.0", "--port", "8000",
+      "--workers", "1"
+    ]
+
+    tty: true
+
+  ui:
+    build: .
+    depends_on:
+      - api
+    ports:
+      - "8501:8501"
+    volumes:
+      - ./:/app
+      - ./data:/data
+      - ./models:/models
+      - ./output:/output
+      - ./logs:/logs
+
+    working_dir: /app
+    environment:
+      - API_BASE=http://api:8000
+      - PUBLIC_API_BASE=http://localhost:8000
+      - LANG=C.UTF-8
+      - LC_ALL=C.UTF-8
+    command: ["streamlit", "run", "src/ui/app.py", "--server.address=0.0.0.0", "--server.port=8501"]
     tty: true

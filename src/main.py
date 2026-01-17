@@ -1,63 +1,70 @@
+from __future__ import annotations
+
 import os
-import subprocess
-import sys
-import tempfile
+from pathlib import Path
+from typing import Iterable
+import subprocess, json
+from src.config.paths import ensure_dirs  # jeśli to uruchamiasz w repo (nie w kontenerze)
 
 R_PATH = r"C:\Program Files\R\R-4.5.2\bin\Rscript.exe"
-R_LIBS = os.path.join(os.getcwd(), "venv_R_libs")
+R_LIBS = Path(os.getcwd()) / "venv_R_libs"
+REQUIRED_R_PKGS = ["forecast", "tseries", "TTR", "dplyr", "quantmod"]
 
-def ensure_r_environment():
-    if not os.path.exists(R_PATH):
-        sys.exit(f"[ERROR] Rscript not found at {R_PATH}")
 
-    os.makedirs(R_LIBS, exist_ok=True)
-    r_safe_path = R_LIBS.replace("\\", "/")
-
-    r_script = f"""
-    libs <- .libPaths()
-    .libPaths('{r_safe_path}')
-    req <- c('forecast','tseries','TTR','dplyr','quantmod')
-    installed <- rownames(installed.packages(lib.loc='{r_safe_path}'))
-    missing <- req[!(req %in% installed)]
-    if (length(missing) > 0) {{
-        install.packages(missing, lib='{r_safe_path}', repos='https://cloud.r-project.org')
-        cat('Installed missing packages:', missing, '\\n')
-    }} else {{
-        cat('All R packages already installed.\\n')
-    }}
+def ensure_r_environment() -> str:
     """
+    Installs required R packages into an isolated library folder and returns that path.
+    """
+    if not Path(R_PATH).exists():
+        raise FileNotFoundError(f"Rscript not found at {R_PATH}")
 
-    with tempfile.NamedTemporaryFile(mode="w", suffix=".R", delete=False, encoding="utf-8") as tmp_file:
-        tmp_file.write(r_script)
-        tmp_path = tmp_file.name
+    R_LIBS.mkdir(parents=True, exist_ok=True)
+    r_lib = str(R_LIBS).replace("\\", "/")
 
-    print(f"[Bootstrap] Executing R environment check via script: {tmp_path}")
-    try:
-        subprocess.run([R_PATH, tmp_path], check=True)
-    except subprocess.CalledProcessError as e:
-        print(f"[ERROR] R setup failed with exit code {e.returncode}")
-        sys.exit(1)
-    finally:
-        os.remove(tmp_path)
+    pkg_vec = "c(" + ",".join(f"'{p}'" for p in REQUIRED_R_PKGS) + ")"
 
-    os.environ["R_LIBS_USER"] = r_safe_path
-    os.environ["R_LIBS"] = r_safe_path
-    print(f"[Bootstrap] R environment verified and bound to isolated library: {r_safe_path}\n")
+    expr = (
+        f".libPaths('{r_lib}'); "
+        f"req <- {pkg_vec}; "
+        f"inst <- rownames(installed.packages(lib.loc='{r_lib}')); "
+        f"missing <- req[!(req %in% inst)]; "
+        f"if (length(missing) > 0) {{ "
+        f"  install.packages(missing, lib='{r_lib}', repos='https://cloud.r-project.org'); "
+        f"  cat('Installed missing packages:', paste(missing, collapse=', '), '\\n'); "
+        f"}} else {{ "
+        f"  cat('All R packages already installed.\\n'); "
+        f"}}"
+    )
+
+    subprocess.run([R_PATH, "--vanilla", "-e", expr], check=True)
+
+    # ważne: ustawiamy dla procesu Pythona (i potomnych)
+    os.environ["R_LIBS_USER"] = r_lib
+    return r_lib
 
 
-def run_r_script(script_path: str, *args):
-    """Execute any R script with the virtual library path injected automatically."""
-    if not os.path.exists(script_path):
-        raise FileNotFoundError(f"R script not found: {script_path}")
 
-    r_safe_path = R_LIBS.replace("\\", "/")
-    cmd = [
-        R_PATH,
-        "--vanilla",
-        "-e",
-        f".libPaths('{r_safe_path}'); source('{script_path.replace(os.sep, '/')}')"
-    ]
 
-    print(f"[R-Run] Executing: {script_path}")
-    subprocess.run(cmd, check=True)
-    print(f"[R-Run] Completed: {script_path}\n")
+def run_r_script(script_path, args):
+    cmd = ["Rscript", script_path] + args
+    proc = subprocess.run(cmd, capture_output=True, text=True, timeout=90)
+    if proc.returncode != 0:
+        raise RuntimeError(f"R failed: {proc.stderr}")
+    return json.loads(proc.stdout)
+
+
+
+def run_analyze_r(script_path: str | Path, ticker: str, interval: str = "1d") -> None:
+    """
+    Calls analyze.R with explicit args (najstabilniej).
+    """
+    ensure_dirs()
+
+    t = ticker.strip().upper()
+    itv = (interval.strip() or "1d")
+
+    # Możesz też trzymać env jako fallback:
+    os.environ["STOCK_TICKER"] = t
+    os.environ["STOCK_INTERVAL"] = itv
+
+    run_r_script(script_path, args=["--ticker", t, "--interval", itv])

@@ -1,13 +1,34 @@
-config_path <- normalizePath(file.path("src", "config", "paths.R"), mustWork = FALSE)
-if (!file.exists(config_path)) {
-  config_path <- normalizePath(file.path(dirname(getwd()), "src", "config", "paths.R"), mustWork = FALSE)
+# ============================================================
+# read_data.R — data loader (inherits global config)
+# ============================================================
+# Inherit global config from analyze.R instead of reloading paths.R
+if (!exists("PROJECT_ROOT")) {
+  PROJECT_ROOT <- Sys.getenv("PROJECT_ROOT", unset = "/app")
 }
-if (!file.exists(config_path)) {
-  stop("[ConfigError] Cannot locate paths.R")
+if (!exists("R_DIR")) {
+  R_DIR <- file.path(PROJECT_ROOT, "src", "r")
 }
-source(config_path, encoding = "UTF-8")
-cat("[Config] paths.R successfully loaded globally.\n")
+if (!exists("CONFIG_DIR")) {
+  CONFIG_DIR <- file.path(PROJECT_ROOT, "src", "config")
+}
 
+# Only load paths.R once if missing
+if (!exists("PATHS_LOADED") || isFALSE(PATHS_LOADED)) {
+  config_path <- file.path(CONFIG_DIR, "paths.R")
+  if (!file.exists(config_path)) {
+    stop(paste("[ConfigError] Cannot locate paths.R at", config_path))
+  }
+  source(config_path, encoding = "UTF-8")
+  PATHS_LOADED <- TRUE
+}
+
+cat("[Config] paths.R loaded\n")
+cat("[Config] PROJECT_ROOT=", PROJECT_ROOT, "\n")
+cat("[Config] R_DIR=", R_DIR, "\n")
+
+# ============================================================
+# Functions
+# ============================================================
 
 default_data_filename <- function(ticker) {
   paste0(ticker, "_1d.csv")
