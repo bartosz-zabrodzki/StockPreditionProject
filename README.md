@@ -56,11 +56,11 @@ Korzystanie z API (krokowo i end-to-end)
 API udostępnia prosty kontrakt: przekazujesz ticker, interval oraz force, a kolejne endpointy uruchamiają odpowiedni etap pipeline. force=true wymusza odświeżenie danych/cech/modeli (w zależności od kroku), co jest przydatne po zmianach w logice lub przy debugowaniu.
 
 Przykład wywołania pełnego pipeline:
-
+```
 curl -X POST http://localhost:8000/pipeline \
   -H "Content-Type: application/json" \
   -d "{\"ticker\":\"AAPL\",\"interval\":\"1d\",\"force\":true}"
-
+```
 
 Jeżeli chcesz wykonywać kroki ręcznie (np. do debugowania R albo treningu), użyj kolejno:
 
@@ -121,15 +121,16 @@ Uruchomienie bez Dockera (development)
 Możesz uruchomić projekt lokalnie, ale wymagane są zależności systemowe oraz działające R (Rscript) z pakietami. W praktyce Docker jest rekomendowany, bo stabilizuje środowisko.
 
 API:
-
+```
 python3.11 -m uvicorn src.api.app:app --host 0.0.0.0 --port 8000
-
+```
 
 UI:
-
+```
 streamlit run src/ui/app.py --server.address=0.0.0.0 --server.port=8501
-
+```
 Status projektu i dalsze kierunki
 
 Projekt działa jako pipeline E2E z powtarzalnymi artefaktami na wolumenach i z rozdzieleniem API/UI. Naturalne następne kroki to: dopracowanie walidacji wejść, zawężenie CORS, wersjonowanie modeli per ticker/interwał, oraz lepsza obserwowalność (log levels, structured logs, metryki). W zakresie predykcji warto rozważyć ujednolicenie kontraktu kolumn (DL_Forecast/XGB_Forecast/Hybrid_Forecast vs aliasy do UI) oraz stabilne formaty zapisu danych R (np. zawsze JSON do stdout albo zawsze CSV do FORECASTS_DIR).
+
 
