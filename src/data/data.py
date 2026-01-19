@@ -1,15 +1,16 @@
 from src.models.config import get_model_paths
-from src.config.paths import CACHE_DIR
+
 import os
 import pandas as pd
 import yfinance as yf
-import subprocess
-import sys
+from pathlib import Path
+from src.config.paths import CACHE_DIR
+
 from datetime import datetime, timedelta
 from typing import Optional, Tuple
 import logging
 logger = logging.getLogger(__name__)
-logging.basicConfig(level=logging.INFO)
+
 
 
 
@@ -20,14 +21,13 @@ INTERVAL = paths["INTERVAL"]
 PERIOD = paths["PERIOD"]
 
 class StockDataLoader:
+    def __init__(self, cache_dir: Path = CACHE_DIR, logs_dir: Path = Path("logs"), cache_expiry_days: int = 1):
+        self.cache_dir = Path(cache_dir)
+        self.logs_dir = Path(logs_dir)
+        self.cache_expiry_days = int(cache_expiry_days)
 
-    def __init__(self, cache_dir: str = CACHE_DIR, logs_dir: str = "logs", cache_expiry_days: int = 1):
-        self.cache_dir = cache_dir
-        self.cache_expiry_days = cache_expiry_days
-        self.logs_dir = logs_dir
-
-        os.makedirs(self.cache_dir, exist_ok=True)
-        os.makedirs(self.logs_dir, exist_ok=True)
+        self.cache_dir.mkdir(parents=True, exist_ok=True)
+        self.logs_dir.mkdir(parents=True, exist_ok=True)
 
         self.logger = self._setup_logger()
 
@@ -49,15 +49,15 @@ class StockDataLoader:
 
         return logger
 
-    def _get_cache_path(self, ticker: str, interval: str) -> str:
+    def _get_cache_path(self, ticker: str, interval: str) -> Path:
         safe_ticker = ticker.strip().upper().replace("/", "_")
-        return os.path.join(self.cache_dir, f"{safe_ticker}_{interval}.csv")
+        return self.cache_dir / f"{safe_ticker}_{interval}.csv"
 
-    def _is_cache_fresh(self, cache_path: str) -> bool:
-        if not os.path.exists(cache_path):
+    def _is_cache_fresh(self, cache_path: Path) -> bool:
+        if not cache_path.exists():
             return False
-        file_time = datetime.fromtimestamp(os.path.getmtime(cache_path))
-        return datetime.now()  - file_time < timedelta(days = self.cache_expiry_days)
+        file_time = datetime.fromtimestamp(cache_path.stat().st_mtime)
+        return datetime.now() - file_time < timedelta(days=self.cache_expiry_days)
 
     def fetch(
             self,
@@ -79,22 +79,12 @@ class StockDataLoader:
         cache_valid = self._is_cache_fresh(cache_path)
 
         if cache_valid and not force_download and os.path.exists(cache_path):
-            try:
-                df = pd.read_csv(cache_path, parse_dates=["Date"])
-                if not df.empty and "Close" in df.columns:
-                    self.logger.info(f"Loaded cached data for {ticker}")
-                    return df
-            except Exception as e:
-                self.logger.warning(f"Invalid cache {cache_path}: {e}")
+            df = pd.read_csv(cache_path, parse_dates=["Date"])
 
         self.logger.info(f"Downloading fresh data: {ticker} (interval={interval})...")
 
         if overwrite_cache and os.path.exists(cache_path):
-            try:
-                os.remove(cache_path)
-                self.logger.info(f"Old cache removed: {cache_path}")
-            except Exception as e:
-                self.logger.warning(f"Failed to remove old cache {cache_path}: {e}")
+            cache_path.unlink()
 
         try:
             print(f"[Download] Fetching {ticker} from Yahoo Finance...")
@@ -130,13 +120,8 @@ class StockDataLoader:
             if list(df.columns).count("Date") > 1:
                 df = df.loc[:, ~df.columns.duplicated()]
 
-            df.to_csv(
-                cache_path,
-                index=False,
-                date_format="%Y-%m-%d",
-                float_format="%.6f",
-                encoding="utf-8"
-            )
+            df.to_csv(cache_path, index=False, date_format="%Y-%m-%d", float_format="%.6f", encoding="utf-8")
+
             self.logger.info(f"Saved clean cache: {cache_path}")
 
             test_df = pd.read_csv(cache_path, nrows=5)
@@ -179,7 +164,7 @@ def run(ticker: str, start: str = "2020-01-01", interval: str = "1d", normalize:
 
     force = os.getenv("FORCE", "0") == "1"
 
-    loader = StockDataLoader(cache_expiry_days=1)
+    loader = StockDataLoader()
 
     data = loader.fetch(
         ticker,
@@ -198,9 +183,11 @@ def run(ticker: str, start: str = "2020-01-01", interval: str = "1d", normalize:
 
 
 if __name__ == "__main__":
+    logging.basicConfig(level=logging.INFO)
+    default_ticker = (os.getenv("STOCK_TICKER", "AAPL").strip().upper() or "AAPL")
     loader = StockDataLoader(cache_expiry_days=1)
+    data = loader.fetch(default_ticker, start="2020-01-01", interval="1d", force_download=True)
 
-    data = loader.fetch(DEFAULT_TICKER, start="2020-01-01", interval="1d", force_download=True)
     if not data.empty:
         clean = loader.preprocess(data, normalize=True)
         train, test = loader.split(clean)

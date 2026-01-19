@@ -117,7 +117,8 @@ with left:
         if not df.empty:
             df["date"] = pd.to_datetime(df["date"], errors="coerce")
             df = df.dropna(subset=["date"]).sort_values("date").set_index("date")
-            st.line_chart(df[["close", "lstm", "xgb"]])
+            st.line_chart(df[["close", "lstm", "xgb", "hybrid"]])
+
 
 with right:
     st.subheader("Latest")
@@ -155,6 +156,7 @@ with right:
         st.image(
             f"{PUBLIC_API_BASE}{latest['downloads']['plot_png']}",
             caption=f"{ticker} predictions plot",
-            width="stretch",
+            use_container_width=True,
         )
+
 

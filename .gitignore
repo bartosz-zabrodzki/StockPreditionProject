@@ -1,11 +1,41 @@
-# Virtual environment
-.venv/
-Lib/
-Scripts/
-
-# IDE
-.idea/
-
-# Cache
+# === Python cache ===
 __pycache__/
 *.pyc
+*.pyo
+*.pyd
+*.log
+*.tmp
+
+# === Local virtual environments (just in case someone creates one) ===
+.venv/
+venv/
+
+# === Environment/config files ===
+.env
+*.env
+
+# === Data & models — mounted via volumes anyway ===
+data/
+models/
+output/
+logs/
+checkpoints/
+notebooks/
+tmp/
+cache/
+*.pth
+*.pkl
+*.csv
+*.npz
+
+# === IDE and system files ===
+.DS_Store
+.idea/
+.vscode/
+.git/
+.gitignore
+*.egg-info/
+dist/
+build/
+
+venv_R_libs

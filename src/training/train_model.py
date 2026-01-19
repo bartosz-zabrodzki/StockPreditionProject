@@ -11,6 +11,19 @@ from torch.utils.data import DataLoader, TensorDataset
 from src.prediction.predict import run as run_predict, PredictConfig
 from src.config.paths import MODEL_DIR, FEATURES_DIR, OUTPUT_DIR
 from src.models.config import get_model_paths, LSTM_CONFIG, XGB_CONFIG
+from src.config.paths import FEATURES_DIR
+from pathlib import Path
+
+def _resolve_feature_file(ticker: str, interval: str) -> Path:
+    t = ticker.strip().upper()
+    i = interval.strip() or "1d"
+    p1 = Path(FEATURES_DIR) / f"{t}_{i}_features.csv"
+    p2 = Path(FEATURES_DIR) / f"{t}_features.csv"  # legacy
+    if p1.exists():
+        return p1
+    if p2.exists():
+        return p2
+    raise FileNotFoundError(f"Missing features file: tried {p1.name} and {p2.name}")
 
 
 # ============================================================
@@ -164,18 +177,25 @@ def train_xgboost(x_train, y_train, x_test, y_test, scaler_X, scaler_Y, xgb_path
 # MAIN PIPELINE
 # ============================================================
 
-def main() -> None:
+def main(ticker: str, interval: str = "1d") -> None:
     from src.config.paths import ensure_dirs
     ensure_dirs()
 
+    os.environ["STOCK_TICKER"] = ticker.strip().upper()
+    os.environ["STOCK_INTERVAL"] = interval.strip() or "1d"
+
     paths = get_model_paths()
     TICKER = paths["TICKER"]
-    FEATURE_FILE = paths["FEATURE_FILE"]
+
+    FEATURE_FILE = _resolve_feature_file(TICKER, os.environ["STOCK_INTERVAL"])
     LSTM_MODEL_PATH = paths["LSTM_MODEL_PATH"]
     XGB_MODEL_PATH = paths["XGB_MODEL_PATH"]
     SCALER_X_PATH = paths["SCALER_X_PATH"]
     SCALER_Y_PATH = paths["SCALER_Y_PATH"]
     TRAINING_HISTORY_PATH = paths["TRAINING_HISTORY_PATH"]
+
+    df = pd.read_csv(FEATURE_FILE).dropna().reset_index(drop=True)
+    target = "Close"
 
     print(f"\n[Init] Training started for {TICKER}")
     print(f"[Init] Using feature file: {FEATURE_FILE}")
@@ -183,13 +203,11 @@ def main() -> None:
     if not Path(FEATURE_FILE).exists():
         raise FileNotFoundError(f"Missing feature file: {FEATURE_FILE}")
 
-    df = pd.read_csv(FEATURE_FILE).dropna().reset_index(drop=True)
-    target = "Close"
-
     numeric_cols = [
         c for c in df.columns
         if c not in {"Date", target} and pd.api.types.is_numeric_dtype(df[c])
     ]
+
     save_feature_schema(TICKER, numeric_cols)
 
     X = df[numeric_cols].values
@@ -231,22 +249,28 @@ def main() -> None:
 
 
 
-def run(ticker: str | None = None):
+def run(ticker: str | None = None, interval: str = "1d"):
     if ticker:
-        os.environ["STOCK_TICKER"] = ticker
-    active_ticker = os.getenv("STOCK_TICKER", "AAPL")
+        os.environ["STOCK_TICKER"] = ticker.strip().upper()
+    os.environ["STOCK_INTERVAL"] = interval.strip() or "1d"
 
-    print(f"[Train] Starting full training pipeline for {active_ticker}")
-    main()
+    active_ticker = os.getenv("STOCK_TICKER", "AAPL").strip().upper()
+    active_interval = os.getenv("STOCK_INTERVAL", "1d")
+
+    print(f"[Train] Starting full training pipeline for {active_ticker} ({active_interval})")
+    main(active_ticker, active_interval)
     print(f"[Train] Completed training for {active_ticker}")
 
+    feature_file = _resolve_feature_file(active_ticker, active_interval)
+
     config = PredictConfig(
-        feature_file=FEATURES_DIR / f"{active_ticker}_features.csv",
+        feature_file=feature_file,
         output_dir=OUTPUT_DIR,
         ticker=active_ticker,
         forecast_days=30,
     )
-    run_predict(config)
+    run_predict(config=config)
+
 
 
 

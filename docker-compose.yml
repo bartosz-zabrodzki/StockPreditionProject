@@ -1,13 +1,22 @@
+version: "3.9"
+
+# ============================================================
+# Global build defaults (avoid repeating context/dockerfile)
+# ============================================================
+x-build-defaults: &build_defaults
+  context: .
+  dockerfile: Dockerfile
+
+
 services:
+  # ============================================================
+  #  Core Model Training / Prediction Service
+  # ============================================================
   stock-predictor:
-    build: .
-    volumes:
-      - ./:/app
-      - ./data:/data
-      - ./models:/models
-      - ./output:/output
-      - ./logs:/logs
-    working_dir: /app
+    build:
+      <<: *build_defaults
+      target: stock-predictor
+    container_name: stock-predictor
     environment:
       - PYTHONPATH=/app
       - PYTHONUNBUFFERED=1
@@ -15,12 +24,6 @@ services:
       - MODEL_DIR=/models
       - OUTPUT_DIR=/output
       - LOG_DIR=/logs
-    tty: true
-
-  api:
-    build: .
-    ports:
-      - "8000:8000"
     volumes:
       - ./:/app
       - ./data:/data
@@ -28,6 +31,25 @@ services:
       - ./output:/output
       - ./logs:/logs
     working_dir: /app
+    tty: true
+    command: [ "bash", "-lc", "python3.11 -m src.prediction.predict; tail -f /dev/null" ]
+
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - capabilities: [gpu]
+
+  # ============================================================
+  #  FastAPI Backend (Uvicorn)
+  # ============================================================
+  api:
+    build:
+      <<: *build_defaults
+      target: api
+    container_name: stock-predictor-api
+    ports:
+      - "8000:8000"
     environment:
       - PYTHONPATH=/app
       - PYTHONUNBUFFERED=1
@@ -37,32 +59,57 @@ services:
       - LOG_DIR=/logs
       - LANG=C.UTF-8
       - LC_ALL=C.UTF-8
+    volumes:
+      - ./:/app
+      - ./data:/data
+      - ./models:/models
+      - ./output:/output
+      - ./logs:/logs
+    working_dir: /app
+    tty: true
     command: [
       "python3.11", "-m", "uvicorn", "src.api.app:app",
       "--host", "0.0.0.0", "--port", "8000",
       "--workers", "1"
     ]
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - capabilities: [gpu]
 
-    tty: true
-
+  # ============================================================
+  #  Streamlit Frontend
+  # ============================================================
   ui:
-    build: .
+    build:
+      <<: *build_defaults
+      target: ui
+    container_name: stock-predictor-ui
     depends_on:
       - api
     ports:
       - "8501:8501"
+    environment:
+      - API_BASE=http://api:8000
+      - PUBLIC_API_BASE=http://localhost:8000
+      - LANG=C.UTF-8
+      - LC_ALL=C.UTF-8
     volumes:
       - ./:/app
       - ./data:/data
       - ./models:/models
       - ./output:/output
       - ./logs:/logs
-
     working_dir: /app
-    environment:
-      - API_BASE=http://api:8000
-      - PUBLIC_API_BASE=http://localhost:8000
-      - LANG=C.UTF-8
-      - LC_ALL=C.UTF-8
-    command: ["streamlit", "run", "src/ui/app.py", "--server.address=0.0.0.0", "--server.port=8501"]
     tty: true
+    command: [
+      "streamlit", "run", "src/ui/app.py",
+      "--server.address=0.0.0.0",
+      "--server.port=8501"
+    ]
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - capabilities: [gpu]

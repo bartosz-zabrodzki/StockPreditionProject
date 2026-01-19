@@ -1,13 +1,14 @@
 from __future__ import annotations
+
 import os
-from fastapi import HTTPException
 from pathlib import Path
 
 from fastapi import FastAPI, HTTPException
-from fastapi.responses import FileResponse
-
-from pydantic import BaseModel, Field
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse
+from pydantic import BaseModel, Field
+
+from src.models.config import clean_old_outputs
 from src.config.paths import (
     ensure_dirs,
     DATA_DIR,
@@ -18,7 +19,6 @@ from src.config.paths import (
     OUTPUT_DIR,
     LOG_DIR,
 )
-
 
 app = FastAPI(title="StockPredictionProject API")
 app.add_middleware(
@@ -61,20 +61,21 @@ def _set_env(ticker: str, interval: str, force: bool = False) -> None:
 
 
 def _safe_call(fn, *args, **kwargs):
-    """Safely call a function and handle known recoverable exceptions once."""
     try:
         return fn(*args, **kwargs)
 
+
     except FileExistsError as e:
-        existing = str(e).split(":")[-1].strip()
-        if os.path.exists(existing):
+
+        existing = getattr(e, "filename", None)
+
+        if existing and os.path.exists(existing):
             os.remove(existing)
+
             print(f"[safe_call] Removed existing file: {existing}")
-        # ⚠️ Call only once more
-        try:
-            return fn(*args, **kwargs)
-        except Exception as inner_e:
-            raise HTTPException(status_code=500, detail=f"{fn.__name__} failed after retry: {inner_e}")
+
+        return fn(*args, **kwargs)
+
 
     except SystemExit as e:
         code = e.code if isinstance(e.code, int) else 0
@@ -116,6 +117,7 @@ def artifacts(ticker: str = "AAPL"):
     outputs = sorted([p.name for p in out_dir.glob(f"*{t}*") if p.is_file()])
     scalers = sorted([p.name for p in scaler_dir.glob(f"*{t}*") if p.is_file()]) if scaler_dir.exists() else []
 
+
     return {"ticker": t, "models": models, "scalers": scalers, "outputs": outputs}
 
 
@@ -149,7 +151,7 @@ def features(req: TickerReq):
     interval = os.environ["STOCK_INTERVAL"]
 
     # 👇 auto-fetch missing data
-    cache_file = Path(f"/data/data_cache/{ticker}_{interval}.csv")
+    cache_file = Path(CACHE_DIR) / f"{ticker}_{interval}.csv"
     if not cache_file.exists():
         print(f"[AutoFetch] No cache for {ticker}, fetching...")
         run_fetch(ticker=ticker, interval=interval, normalize=True, split=True)
@@ -164,30 +166,48 @@ def train(req: TickerReq):
     ensure_dirs()
     _set_env(req.ticker, req.interval, req.force)
 
-
     from src.training.train_model import run as run_train
-    _safe_call(run_train, ticker=os.environ["STOCK_TICKER"])
 
-    return {"status": "trained", "ticker": os.environ["STOCK_TICKER"], "force": os.environ["FORCE"]}
+    ticker = os.environ["STOCK_TICKER"]
+    interval = os.environ["STOCK_INTERVAL"]
+
+    _safe_call(run_train, ticker=ticker, interval=interval)
+
+
+    return {"status": "trained", "ticker": ticker, "interval": interval, "force": req.force}
 
 @app.post("/predict")
 def predict(req: TickerReq):
     ensure_dirs()
+    clean_old_outputs(req.ticker)
     _set_env(req.ticker, req.interval, req.force)
 
-    from src.prediction.predict import run as run_predict
+    from src.prediction.predict import run as run_predict, PredictConfig
 
-    _safe_call(run_predict, ticker=os.environ["STOCK_TICKER"])
-    return {"status": "predicted", "ticker": os.environ["STOCK_TICKER"]}
+    ticker = os.environ["STOCK_TICKER"]
+    interval = os.environ["STOCK_INTERVAL"]
+
+    feature_path = Path(FEATURES_DIR) / f"{ticker}_{interval}_features.csv"
+    alt_path = Path(FEATURES_DIR) / f"{ticker}_features.csv"
+    if alt_path.exists() and not feature_path.exists():
+        feature_path = alt_path
+
+    if not feature_path.exists():
+        raise HTTPException(404, f"missing features file: {feature_path.name} (run /features first)")
+
+    config = PredictConfig(
+        feature_file=feature_path,
+        output_dir=Path(OUTPUT_DIR),
+        ticker=ticker,
+        forecast_days=30,
+    )
+
+    _safe_call(run_predict, config=config)
+    return {"status": "predicted", "ticker": ticker, "interval": interval, "feature_file": str(feature_path)}
+
+
 @app.post("/pipeline")
 def pipeline(req: TickerReq):
-    """
-    Full end-to-end pipeline:
-      1. Fetch data
-      2. Build features
-      3. Train models (LSTM + XGB)
-      4. Predict with hybrid R integration
-    """
     import traceback
     import logging
     from src.prediction.predict import run as run_predict, PredictConfig
@@ -195,33 +215,52 @@ def pipeline(req: TickerReq):
     ensure_dirs()
     _set_env(req.ticker, req.interval, req.force)
 
+    ticker = os.environ["STOCK_TICKER"]
+    interval = os.environ["STOCK_INTERVAL"]
+
     from src.data.data import run as run_fetch
     from src.features.build_features import run as run_features
     from src.training.train_model import run as run_train
 
     log = logging.getLogger(__name__)
-
-    ticker = os.environ["STOCK_TICKER"]
-    interval = os.environ["STOCK_INTERVAL"]
-    force = os.environ["FORCE"]
-
     try:
         # 1 Fetch (skip if cache exists)
         cache_path = Path(CACHE_DIR) / f"{ticker}_{interval}.csv"
+        if req.force:
+            if cache_path.exists():
+                try:
+                    cache_path.unlink()
+                    log.info(f"[pipeline] Deleted old cache → {cache_path}")
+                except Exception as e:
+                    log.warning(f"[pipeline] Could not delete cache {cache_path}: {e}")
+
         if req.force or not cache_path.exists():
             _safe_call(run_fetch, ticker=ticker, interval=interval, normalize=True, split=True)
         else:
             log.info(f"[pipeline] Skipping fetch — cache already exists at {cache_path}")
 
-        # 2 Features (skip if file exists)
+        # 2 Build or rebuild features
         feature_path = Path(FEATURES_DIR) / f"{ticker}_{interval}_features.csv"
-        if not feature_path.exists():
-            feature_path = Path(FEATURES_DIR) / f"{ticker}_features.csv"
-        if not feature_path.exists():
-            raise HTTPException(
-                status_code=404,
-                detail=f"Feature file not found for {ticker}: {feature_path}"
-            )
+        alt_path = Path(FEATURES_DIR) / f"{ticker}_features.csv"
+
+        # Ensure the correct output file name (depending on your R script)
+        if alt_path.exists() and not feature_path.exists():
+            feature_path = alt_path
+
+        # If forcing rebuild, delete the old features first
+        if req.force and feature_path.exists():
+            try:
+                feature_path.unlink()
+                log.info(f"[pipeline] Deleted old features → {feature_path}")
+            except Exception as e:
+                log.warning(f"[pipeline] Could not delete {feature_path}: {e}")
+
+        # Always run features if forced or missing
+        if req.force or not feature_path.exists():
+            log.info(f"[pipeline] Building features for {ticker} (force={req.force})...")
+            feature_path = _safe_call(run_features, ticker=ticker, interval=interval, force=req.force)
+        else:
+            log.info(f"[pipeline] Skipping feature build — using existing {feature_path}")
 
         # 3 Train models only if needed
         lstm_path = Path(MODEL_DIR) / f"lstm_model_{ticker}.pth"
@@ -231,7 +270,7 @@ def pipeline(req: TickerReq):
             msg = f"[pipeline] Training models for {ticker} ... (force={req.force})"
             print(msg)
             log.info(msg)
-            _safe_call(run_train, ticker=ticker)
+            _safe_call(run_train, ticker=ticker, interval=interval)
         else:
             msg = f"[pipeline] Skipping retraining — models for {ticker} already exist."
             print(msg)
@@ -245,11 +284,24 @@ def pipeline(req: TickerReq):
             forecast_days=30,
         )
 
+        # ---  Always clean old outputs before predicting ---
+        old_outputs = list(Path(OUTPUT_DIR).glob(f"{ticker}_*.csv"))
+        if old_outputs:
+            print(f"[Pipeline] Cleaning old prediction files for {ticker} ...")
+            for old in old_outputs:
+                try:
+                    old.unlink()
+                    print(f"[Pipeline] Deleted old output → {old.name}")
+                except Exception as e:
+                    print(f"[Pipeline] Warning: Could not delete {old.name}: {e}")
+
         lock_path = Path(f"/tmp/predict_{ticker}.lock")
         if lock_path.exists():
             raise HTTPException(429, f"Prediction already running for {ticker}")
 
         try:
+
+            clean_old_outputs(ticker)
             lock_path.touch()
             _safe_call(run_predict, config=config)
         finally:
@@ -260,12 +312,14 @@ def pipeline(req: TickerReq):
             "status": "ok",
             "ticker": ticker,
             "interval": interval,
-            "force": force,
+            "force": req.force,
             "message": (
                 "Pipeline completed successfully with hybrid forecast. "
                 f"(retrain={'yes' if req.force else 'no'})"
             ),
         }
+
+
 
     except Exception as e:
         err_trace = "".join(traceback.format_exception(type(e), e, e.__traceback__))
@@ -303,43 +357,62 @@ def series(ticker: str = "AAPL", n: int = 200):
     for _, r in df.iterrows():
         out.append({
             "date": str(r["Date"]),
-            "close": float(r["Close"]),
-            "lstm": float(r["LSTM_Prediction"]),
-            "xgb": float(r["XGB_Prediction"]),
+            "close": float(r.get("Close", 0)),
+            "lstm": float(r.get("LSTM_Prediction", r.get("DL_Forecast", 0)) or 0),
+            "xgb": float(r.get("XGB_Prediction", r.get("XGB_Forecast", 0)) or 0),
+            "hybrid": float(r.get("Hybrid_Prediction", r.get("Hybrid_Forecast", 0)) or 0),
         })
-
     return {"ticker": t, "n": len(out), "points": out}
 
-@app.get("/results/series")
-def series(ticker: str = "AAPL", n: int = 200):
+
+@app.get("/results/latest")
+def latest(ticker: str = "AAPL"):
     import pandas as pd
     import numpy as np
     import json
 
     t = ticker.strip().upper()
-    pred_csv = Path(OUTPUT_DIR) / f"{t}_predictions.csv"
+    pred_csv = Path(str(OUTPUT_DIR)).resolve() / f"{t}_predictions.csv"
+    fc_csv = Path(str(OUTPUT_DIR)).resolve() / f"{t}_forecast.csv"
+    plot_png = Path(str(OUTPUT_DIR)).resolve() / f"{t}_predictions_plot.png"
+
+    # 🔍 Debug: show path resolution in logs (optional)
+    print(f"[DEBUG] latest() checking path: {pred_csv} (exists={pred_csv.exists()})")
+
     if not pred_csv.exists():
         raise HTTPException(404, f"missing predictions: {pred_csv.name}")
 
-    df = pd.read_csv(pred_csv).tail(int(n))
+    df = pd.read_csv(pred_csv)
 
-    # Sanitize everything here, only once
+    # 🧹 Sanitize numeric data to prevent JSON float errors
     df.replace([np.inf, -np.inf], 0, inplace=True)
     df.fillna(0, inplace=True)
 
-    #  Build output
-    out = [
-        {
-            "date": str(r.get("Date", "")),
-            "close": float(r.get("Close", 0) or 0),
-            "lstm": float(r.get("LSTM_Prediction", 0) or 0),
-            "xgb": float(r.get("XGB_Prediction", 0) or 0),
-        }
-        for _, r in df.iterrows()
-    ]
+    if df.empty:
+        raise HTTPException(400, f"{t}_predictions.csv is empty")
 
-    #  Guarantee it can be serialized (no NaN/inf)
-    return json.loads(json.dumps({"ticker": t, "n": len(out), "points": out}))
+    # Pick last record safely
+    r = df.iloc[-1]
+
+    latest_data = {
+        "date": str(r.get("Date", "")),
+        "close": float(r.get("Close", 0) or 0),
+        "lstm": float(r.get("LSTM_Prediction", 0) or 0),
+        "xgb": float(r.get("XGB_Prediction", 0) or 0),
+    }
+
+    #  Build JSON-safe response
+    result = {
+        "ticker": t,
+        "latest": latest_data,
+        "downloads": {
+            "predictions_csv": f"/download/output/{pred_csv.name}",
+            "forecast_csv": f"/download/output/{fc_csv.name}" if fc_csv.exists() else None,
+            "plot_png": f"/download/output/{plot_png.name}" if plot_png.exists() else None,
+        },
+    }
+
+    return json.loads(json.dumps(result))
 
 
 
