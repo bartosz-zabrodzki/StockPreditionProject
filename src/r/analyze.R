@@ -2,9 +2,6 @@
 # analyze.R — główny pipeline R
 # ============================================================
 
-# ============================================================
-# analyze.R — unified header (robust path & JSON-safe)
-# ============================================================
 
 suppressPackageStartupMessages({
   library(forecast)
