@@ -87,13 +87,15 @@ UI (Streamlit): sterowanie pipeline i wizualizacja
 UI jest cienką warstwą na API. Pozwala wybrać ticker i interwał, uruchamiać poszczególne kroki oraz wyświetlać:
 
 wykres serii (Close, LSTM, XGB oraz Hybrid, jeśli endpoint ją zwraca),
-<img width="1000" height="600" alt="obraz" src="https://github.com/user-attachments/assets/2629de9c-ee6f-4918-bf02-74503fe14acd" />
 
 metryki „Latest” (ostatnia data, close, LSTM, XGB),
 
 listę artefaktów zapisanych na dysku,
 
 podgląd wygenerowanego wykresu PNG bezpośrednio w przeglądarce.
+
+<img width="1000" height="600" alt="obraz" src="https://github.com/user-attachments/assets/2629de9c-ee6f-4918-bf02-74503fe14acd" />
+
 
 Jeżeli podgląd obrazu nie działa, najczęstszą przyczyną jest niewłaściwy parametr width w st.image. Poprawny sposób na „rozciągnięcie” obrazu w Streamlit to use_container_width=True.
 
@@ -133,6 +135,7 @@ streamlit run src/ui/app.py --server.address=0.0.0.0 --server.port=8501
 Status projektu i dalsze kierunki
 
 Projekt działa jako pipeline E2E z powtarzalnymi artefaktami na wolumenach i z rozdzieleniem API/UI. Naturalne następne kroki to: dopracowanie walidacji wejść, zawężenie CORS, wersjonowanie modeli per ticker/interwał, oraz lepsza obserwowalność (log levels, structured logs, metryki). W zakresie predykcji warto rozważyć ujednolicenie kontraktu kolumn (DL_Forecast/XGB_Forecast/Hybrid_Forecast vs aliasy do UI) oraz stabilne formaty zapisu danych R (np. zawsze JSON do stdout albo zawsze CSV do FORECASTS_DIR).
+
 
 
 
