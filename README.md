@@ -1,3 +1,22 @@
+# StockPredictionProject
+
+StockPredictionProject to kompletna aplikacja do budowy prognoz cen akcji w trybie „end-to-end”: od pobrania danych rynkowych, przez inżynierię cech (z użyciem R), trening modeli (PyTorch LSTM + XGBoost), aż po generowanie predykcji i artefaktów (CSV + wykres). Projekt jest przygotowany pod uruchomienie w Dockerze z GPU (CUDA 12.1) i udostępnia dwa interfejsy: API (FastAPI) oraz UI (Streamlit). Cały przepływ można wykonać jednym requestem (`/pipeline`) albo krokowo (`/fetch`, `/features`, `/train`, `/predict`).
+
+Ważna cecha projektu: logika pipeline jest spójna między uruchomieniem przez API, UI i CLI. API ustawia kontekst (ticker, interwał i tryb force) per-request, a poszczególne moduły czytają te wartości i pracują na wspólnych katalogach roboczych mapowanych jako wolumeny Dockera. Dzięki temu artefakty (modele, scalery, dane, outputy) zostają na hoście i nie giną po restarcie kontenerów.
+
+## Co robi pipeline i dlaczego tak jest zorganizowany
+
+Pipeline składa się z czterech logicznych etapów. Najpierw pobierane są dane notowań (Yahoo Finance), a wynik jest czyszczony do stabilnej struktury kolumn (`Date, Open, High, Low, Close, Volume`) i zapisywany do cache w formacie CSV. Następnie uruchamiany jest etap budowy cech, realizowany przez skrypt R (`src/r/analyze.R`). Ten krok odpowiada za feature engineering (np. wskaźniki techniczne, transformacje czasowe, przygotowanie zbioru cech) i produkuje plik cech w katalogu `FEATURES_DIR`. Potem uruchamiany jest trening dwóch modeli: LSTM (dla sekwencji czasowych) oraz XGBoost (dla predykcji tablicowej). Na końcu wykonywana jest predykcja i generowane są artefakty: `predictions.csv`, `forecast.csv` oraz plik PNG z wykresem.
+
+Wynik końcowy jest hybrydą, która łączy predykcje DL (LSTM) i XGB, a opcjonalnie także wkład z R. W praktyce oznacza to, że aplikacja może produkować zarówno osobne serie (Close/LSTM/XGB), jak i serię hybrydową. UI korzysta z endpointów API, które zwracają gotowe serie do wykresu i metryki „latest”.
+
+## Uruchomienie w Dockerze
+
+Projekt jest przygotowany do pracy w Docker Compose. Najprostszy sposób uruchomienia to build i start całego stosu:
+
+```
+docker compose up --build
+```
 Po starcie dostępne są:
 
 API (FastAPI): http://localhost:8000/docs
@@ -113,3 +132,4 @@ streamlit run src/ui/app.py --server.address=0.0.0.0 --server.port=8501
 Status projektu i dalsze kierunki
 
 Projekt działa jako pipeline E2E z powtarzalnymi artefaktami na wolumenach i z rozdzieleniem API/UI. Naturalne następne kroki to: dopracowanie walidacji wejść, zawężenie CORS, wersjonowanie modeli per ticker/interwał, oraz lepsza obserwowalność (log levels, structured logs, metryki). W zakresie predykcji warto rozważyć ujednolicenie kontraktu kolumn (DL_Forecast/XGB_Forecast/Hybrid_Forecast vs aliasy do UI) oraz stabilne formaty zapisu danych R (np. zawsze JSON do stdout albo zawsze CSV do FORECASTS_DIR).
+
